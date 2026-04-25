@@ -5,7 +5,7 @@ Usage:
     python -m pipeline.build_table
 
 Reads DATA_DIR from .env. Writes pipeline/creative_features.parquet.
-Automatically picks the campaign with n_creatives >= 10, n_days >= 30, highest spend
+Automatically picks the campaign with n_creatives >= 6, n_days >= 30, highest spend
 unless CAMPAIGN_ID is already set in .env.
 """
 import os
@@ -23,6 +23,8 @@ DATA_DIR = Path(os.getenv("DATA_DIR", "./Smadex_Creative_Intelligence_Dataset_FU
 IMAGES_DIR = Path(os.getenv("IMAGES_DIR", str(DATA_DIR / "assets")))
 OUT_PATH = Path("pipeline/creative_features.parquet")
 CAMPAIGN_ID = os.getenv("CAMPAIGN_ID", "")
+MIN_CREATIVES = int(os.getenv("MIN_CREATIVES", "6"))
+MIN_DAYS = int(os.getenv("MIN_DAYS", "30"))
 
 
 def pick_campaign() -> str:
@@ -35,13 +37,32 @@ def pick_campaign() -> str:
                SUM(spend_usd)              AS total_spend
         FROM read_csv_auto('{daily_path}')
         GROUP BY campaign_id
-        HAVING n_creatives >= 10 AND n_days >= 30
+        HAVING n_creatives >= {MIN_CREATIVES} AND n_days >= {MIN_DAYS}
         ORDER BY total_spend DESC
         LIMIT 1
     """).fetchone()
 
     if not row:
-        raise ValueError("No campaign meets criteria (n_creatives >= 10, n_days >= 30)")
+        best = con.execute(f"""
+            SELECT campaign_id,
+                   COUNT(DISTINCT creative_id) AS n_creatives,
+                   COUNT(DISTINCT date)        AS n_days,
+                   SUM(spend_usd)              AS total_spend
+            FROM read_csv_auto('{daily_path}')
+            GROUP BY campaign_id
+            ORDER BY n_creatives DESC, n_days DESC, total_spend DESC
+            LIMIT 1
+        """).fetchone()
+        suffix = ""
+        if best:
+            suffix = (
+                f"; best available campaign is {best[0]} "
+                f"({best[1]} creatives, {best[2]} days)"
+            )
+        raise ValueError(
+            "No campaign meets criteria "
+            f"(n_creatives >= {MIN_CREATIVES}, n_days >= {MIN_DAYS}){suffix}"
+        )
 
     cid = str(row[0])
     print(f"Auto-selected campaign {cid} | {row[1]} creatives | {row[2]} days | ${row[3]:,.0f} spend")
@@ -124,7 +145,7 @@ def build(campaign_id: str) -> pd.DataFrame:
 
     df["creative_launch_date"] = pd.to_datetime(df["creative_launch_date"])
     df["first_date"] = df["creative_launch_date"]
-    df["last_date"] = df["first_date"] + pd.to_timedelta(df["active_days"] - 1, unit="d")
+    df["last_date"] = df["first_date"] + pd.to_timedelta(df["active_days"] - 1, unit="D")
 
     # Percentile ranks within campaign
     for src, out in [("ctr", "ctr_pct"), ("ipm", "ipm_pct"), ("spend", "spend_pct"), ("cvr", "cvr_pct")]:
