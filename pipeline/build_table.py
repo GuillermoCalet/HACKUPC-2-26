@@ -1,7 +1,7 @@
 """
 Build creative_features.parquet for a single campaign.
 
-Joins creative_summary.csv + campaign_summary.csv on campaign_id.
+Joins creative_summary.csv + campaigns.csv on campaign_id.
 Cleans the 10% dirty data (fatigue_day nulls) and adds manager-friendly
 derived columns so non-technical users can read the output directly.
 
@@ -29,21 +29,6 @@ OUT_PATH = Path("pipeline/creative_features.parquet")
 CAMPAIGN_ID = os.getenv("CAMPAIGN_ID", "")
 MIN_CREATIVES = int(os.getenv("MIN_CREATIVES", "6"))
 MIN_DAYS = int(os.getenv("MIN_DAYS", "30"))
-
-# Columns that exist in both tables — keep creative-level values, prefix campaign ones
-_CAMPAIGN_RENAME = {
-    "total_spend_usd": "campaign_total_spend_usd",
-    "total_impressions": "campaign_total_impressions",
-    "total_clicks": "campaign_total_clicks",
-    "total_conversions": "campaign_total_conversions",
-    "total_revenue_usd": "campaign_total_revenue_usd",
-    "overall_ctr": "campaign_overall_ctr",
-    "overall_cvr": "campaign_overall_cvr",
-    "overall_roas": "campaign_overall_roas",
-    "advertiser_name": "campaign_advertiser_name",
-    "app_name": "campaign_app_name",
-    "vertical": "campaign_vertical",
-}
 
 
 def pick_campaign() -> str:
@@ -131,16 +116,6 @@ def _add_manager_columns(df: pd.DataFrame) -> pd.DataFrame:
     Derived columns designed for non-technical readers (managers / directius).
     All values are human-readable: percentages, labels, plain-text comparisons.
     """
-    # How this creative's CTR compares to campaign average (in %)
-    df["ctr_vs_campaign_pct"] = (
-        (df["ctr"] - df["campaign_overall_ctr"]) / df["campaign_overall_ctr"].clip(lower=1e-9) * 100
-    ).round(1)
-
-    # How this creative's ROAS compares to campaign average
-    df["roas_vs_campaign_pct"] = (
-        (df["overall_roas"] - df["campaign_overall_roas"]) / df["campaign_overall_roas"].clip(lower=1e-9) * 100
-    ).round(1)
-
     # Plain-text performance label for the UI (replaces raw perf_score for managers)
     def _perf_label(row):
         status = row["creative_status"]
@@ -177,12 +152,13 @@ def build(campaign_id: str) -> pd.DataFrame:
         WHERE campaign_id = {cid}
     """).df()
 
-    # --- Load campaign_summary and rename duplicate columns before join ---
-    campaign_sum = con.execute(f"""
-        SELECT * FROM read_csv_auto('{DATA_DIR / "campaign_summary.csv"}')
+    # --- Load campaigns context (pure configuration, no biased metrics) ---
+    campaign_meta = con.execute(f"""
+        SELECT * FROM read_csv_auto('{DATA_DIR / "campaigns.csv"}')
         WHERE campaign_id = {cid}
     """).df()
-    campaign_sum = campaign_sum.rename(columns=_CAMPAIGN_RENAME)
+    # Drop overlapping metadata to avoid column duplication on merge
+    campaign_meta = campaign_meta.drop(columns=["advertiser_name", "app_name", "vertical"], errors="ignore")
 
     # --- Load daily stats for slope calculation ---
     daily = con.execute(f"""
@@ -190,11 +166,11 @@ def build(campaign_id: str) -> pd.DataFrame:
         WHERE campaign_id = {cid}
     """).df()
 
-    print(f"  {len(creative_sum)} creatives | {len(daily)} daily rows | 1 campaign row")
+    print(f"  {len(creative_sum)} creatives | {len(daily)} daily rows | 1 campaign meta row")
 
-    # --- Join creative_summary + campaign_summary on campaign_id ---
+    # --- Join creative_summary + campaigns.csv on campaign_id ---
     # campaign_id is the only key — one campaign row fans out to all its creatives
-    df = creative_sum.merge(campaign_sum, on="campaign_id", how="left")
+    df = creative_sum.merge(campaign_meta, on="campaign_id", how="left")
 
     # --- Add CTR slope (requires daily table) ---
     slopes = compute_ctr_slope_7d(daily)
@@ -254,13 +230,12 @@ def main():
     print(f"Total columns: {len(df.columns)}")
     print()
     print("=== Performance overview (manager view) ===")
-    print(df[["creative_id", "performance_label", "ctr_vs_campaign_pct",
-              "roas_vs_campaign_pct", "spend_share_pct", "days_since_fatigue"]].to_string(index=False))
+    print(df[["creative_id", "performance_label",
+              "spend_share_pct", "days_since_fatigue"]].to_string(index=False))
     print()
     print("=== Campaign context columns added by join ===")
     camp_cols = ["campaign_id", "countries", "target_os", "objective",
-                 "kpi_goal", "daily_budget_usd", "target_age_segment",
-                 "campaign_overall_roas", "campaign_overall_ctr"]
+                 "kpi_goal", "daily_budget_usd", "target_age_segment"]
     print(df[[c for c in camp_cols if c in df.columns]].iloc[0].to_string())
 
 
