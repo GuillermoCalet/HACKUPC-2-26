@@ -1,6 +1,10 @@
 """
 Build creative_features.parquet for a single campaign.
 
+Joins creative_summary.csv + campaign_summary.csv on campaign_id.
+Cleans the 10% dirty data (fatigue_day nulls) and adds manager-friendly
+derived columns so non-technical users can read the output directly.
+
 Usage:
     python -m pipeline.build_table
 
@@ -25,6 +29,21 @@ OUT_PATH = Path("pipeline/creative_features.parquet")
 CAMPAIGN_ID = os.getenv("CAMPAIGN_ID", "")
 MIN_CREATIVES = int(os.getenv("MIN_CREATIVES", "6"))
 MIN_DAYS = int(os.getenv("MIN_DAYS", "30"))
+
+# Columns that exist in both tables — keep creative-level values, prefix campaign ones
+_CAMPAIGN_RENAME = {
+    "total_spend_usd": "campaign_total_spend_usd",
+    "total_impressions": "campaign_total_impressions",
+    "total_clicks": "campaign_total_clicks",
+    "total_conversions": "campaign_total_conversions",
+    "total_revenue_usd": "campaign_total_revenue_usd",
+    "overall_ctr": "campaign_overall_ctr",
+    "overall_cvr": "campaign_overall_cvr",
+    "overall_roas": "campaign_overall_roas",
+    "advertiser_name": "campaign_advertiser_name",
+    "app_name": "campaign_app_name",
+    "vertical": "campaign_vertical",
+}
 
 
 def pick_campaign() -> str:
@@ -71,7 +90,6 @@ def pick_campaign() -> str:
 
 
 def compute_ctr_slope_7d(daily: pd.DataFrame) -> pd.Series:
-    """Linear slope of daily CTR over the last 7 days, keyed by creative_id."""
     daily = daily.copy()
     daily["date"] = pd.to_datetime(daily["date"])
     agg = daily.groupby(["creative_id", "date"]).agg(
@@ -97,36 +115,97 @@ def compute_ctr_slope_7d(daily: pd.DataFrame) -> pd.Series:
     return pd.Series(slopes, name="ctr_slope_7d")
 
 
+def _clean_fatigue(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    fatigue_day is null for the ~88% of creatives that are not fatigued.
+    Strategy: create is_fatigued (bool) + fill fatigue_day with 0 for non-fatigued.
+    This lets a manager filter/sort without being confused by nulls.
+    """
+    df["is_fatigued"] = df["creative_status"] == "fatigued"
+    df["fatigue_day"] = df["fatigue_day"].fillna(0).astype(int)
+    return df
+
+
+def _add_manager_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Derived columns designed for non-technical readers (managers / directius).
+    All values are human-readable: percentages, labels, plain-text comparisons.
+    """
+    # How this creative's CTR compares to campaign average (in %)
+    df["ctr_vs_campaign_pct"] = (
+        (df["ctr"] - df["campaign_overall_ctr"]) / df["campaign_overall_ctr"].clip(lower=1e-9) * 100
+    ).round(1)
+
+    # How this creative's ROAS compares to campaign average
+    df["roas_vs_campaign_pct"] = (
+        (df["overall_roas"] - df["campaign_overall_roas"]) / df["campaign_overall_roas"].clip(lower=1e-9) * 100
+    ).round(1)
+
+    # Plain-text performance label for the UI (replaces raw perf_score for managers)
+    def _perf_label(row):
+        status = row["creative_status"]
+        if status == "top_performer":
+            return "Top performer"
+        if status == "fatigued":
+            return f"Fatigued (day {row['fatigue_day']})"
+        if status == "underperformer":
+            return "Underperformer"
+        return "Stable"
+
+    df["performance_label"] = df.apply(_perf_label, axis=1)
+
+    # Spend share within the campaign (what % of budget went to this creative)
+    campaign_total = df["spend"].sum()
+    df["spend_share_pct"] = (df["spend"] / campaign_total * 100).round(1) if campaign_total > 0 else 0.0
+
+    # Days since fatigue onset — 0 if not fatigued
+    df["days_since_fatigue"] = df.apply(
+        lambda r: int(r["active_days"] - r["fatigue_day"]) if r["is_fatigued"] and r["fatigue_day"] > 0 else 0,
+        axis=1,
+    )
+
+    return df
+
+
 def build(campaign_id: str) -> pd.DataFrame:
     con = duckdb.connect()
     cid = int(campaign_id)
 
-    summary = con.execute(f"""
+    # --- Load creative_summary (creative-level performance) ---
+    creative_sum = con.execute(f"""
         SELECT * FROM read_csv_auto('{DATA_DIR / "creative_summary.csv"}')
         WHERE campaign_id = {cid}
     """).df()
 
+    # --- Load campaign_summary and rename duplicate columns before join ---
+    campaign_sum = con.execute(f"""
+        SELECT * FROM read_csv_auto('{DATA_DIR / "campaign_summary.csv"}')
+        WHERE campaign_id = {cid}
+    """).df()
+    campaign_sum = campaign_sum.rename(columns=_CAMPAIGN_RENAME)
+
+    # --- Load daily stats for slope calculation ---
     daily = con.execute(f"""
         SELECT * FROM read_csv_auto('{DATA_DIR / "creative_daily_country_os_stats.csv"}')
         WHERE campaign_id = {cid}
     """).df()
 
-    campaign_meta = con.execute(f"""
-        SELECT * FROM read_csv_auto('{DATA_DIR / "campaigns.csv"}')
-        WHERE campaign_id = {cid}
-    """).df()
+    print(f"  {len(creative_sum)} creatives | {len(daily)} daily rows | 1 campaign row")
 
-    print(f"  {len(summary)} creatives | {len(daily)} daily rows")
+    # --- Join creative_summary + campaign_summary on campaign_id ---
+    # campaign_id is the only key — one campaign row fans out to all its creatives
+    df = creative_sum.merge(campaign_sum, on="campaign_id", how="left")
 
+    # --- Add CTR slope (requires daily table) ---
     slopes = compute_ctr_slope_7d(daily)
-    df = summary.merge(
+    df = df.merge(
         slopes.reset_index().rename(columns={"index": "creative_id"}),
         on="creative_id",
         how="left",
     )
     df["ctr_slope_7d"] = df["ctr_slope_7d"].fillna(0.0)
 
-    # Standardise column names to match agent-expected schema
+    # --- Standardise column names to match agent-expected schema ---
     df = df.rename(columns={
         "total_spend_usd": "spend",
         "total_impressions": "impressions",
@@ -156,12 +235,11 @@ def build(campaign_id: str) -> pd.DataFrame:
         lambda p: str((DATA_DIR / p).resolve())
     )
 
-    # Attach campaign-level metadata columns
-    if len(campaign_meta):
-        meta = campaign_meta.iloc[0]
-        for col in ["target_os", "countries", "objective", "kpi_goal", "target_age_segment"]:
-            if col in meta.index:
-                df[col] = meta[col]
+    # --- Clean dirty 10%: fatigue_day nulls ---
+    df = _clean_fatigue(df)
+
+    # --- Add manager-friendly derived columns ---
+    df = _add_manager_columns(df)
 
     return df
 
@@ -173,9 +251,17 @@ def main():
     OUT_PATH.parent.mkdir(exist_ok=True)
     df.to_parquet(OUT_PATH, index=False)
     print(f"\nWritten {len(df)} rows → {OUT_PATH}")
-    print("\nSchema sample:")
-    print(df[["creative_id", "ctr", "ipm", "spend", "installs",
-              "ctr_pct", "ipm_pct", "ctr_slope_7d", "active_days"]].head().to_string())
+    print(f"Total columns: {len(df.columns)}")
+    print()
+    print("=== Performance overview (manager view) ===")
+    print(df[["creative_id", "performance_label", "ctr_vs_campaign_pct",
+              "roas_vs_campaign_pct", "spend_share_pct", "days_since_fatigue"]].to_string(index=False))
+    print()
+    print("=== Campaign context columns added by join ===")
+    camp_cols = ["campaign_id", "countries", "target_os", "objective",
+                 "kpi_goal", "daily_budget_usd", "target_age_segment",
+                 "campaign_overall_roas", "campaign_overall_ctr"]
+    print(df[[c for c in camp_cols if c in df.columns]].iloc[0].to_string())
 
 
 if __name__ == "__main__":

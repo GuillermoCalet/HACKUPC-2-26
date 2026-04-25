@@ -1,0 +1,172 @@
+@startuml Smadex_Dataset_Schema
+
+!define TABLE(x) entity x << (T, #FFAAAA) >>
+skinparam linetype ortho
+skinparam entity {
+  BackgroundColor #FEFECE
+  BorderColor #A80036
+  ArrowColor #A80036
+}
+
+title Smadex Creative Intelligence Dataset — ER Diagram
+
+TABLE(advertisers) {
+  * advertiser_id : integer <<PK>>
+  --
+  advertiser_name : string
+  vertical : string
+  hq_region : string
+}
+
+TABLE(campaigns) {
+  * campaign_id : integer <<PK>>
+  --
+  # advertiser_id : integer <<FK>>
+  advertiser_name : string
+  app_name : string
+  vertical : string
+  objective : string
+  primary_theme : string
+  target_age_segment : string
+  target_os : string
+  countries : string
+  start_date : date
+  end_date : date
+  daily_budget_usd : float
+  kpi_goal : string
+}
+
+TABLE(creatives) {
+  * creative_id : integer <<PK>>
+  --
+  # campaign_id : integer <<FK>>
+  advertiser_name : string
+  app_name : string
+  vertical : string
+  format : string
+  width : integer
+  height : integer
+  language : string
+  creative_launch_date : date
+  theme : string
+  hook_type : string
+  cta_text : string
+  headline : string
+  subhead : string
+  dominant_color : string
+  emotional_tone : string
+  duration_sec : float
+  text_density : float
+  copy_length_chars : integer
+  readability_score : float
+  brand_visibility_score : float
+  clutter_score : float
+  novelty_score : float
+  motion_score : float
+  faces_count : integer
+  product_count : integer
+  has_price : boolean
+  has_discount_badge : boolean
+  has_gameplay : boolean
+  has_ugc_style : boolean
+  asset_file : string
+}
+
+TABLE(creative_daily_country_os_stats) {
+  * date : date <<PK>>
+  * creative_id : integer <<PK, FK>>
+  * campaign_id : integer <<PK, FK>>
+  * country : string <<PK>>
+  * os : string <<PK>>
+  --
+  days_since_launch : integer
+  impressions_last_7d : integer
+  spend_usd : float
+  impressions : integer
+  viewable_impressions : integer
+  clicks : integer
+  conversions : integer
+  revenue_usd : float
+  video_completions : integer
+}
+
+TABLE(creative_summary) {
+  * creative_id : integer <<PK>>
+  --
+  # campaign_id : integer <<FK>>
+  advertiser_name : string
+  app_name : string
+  vertical : string
+  format : string
+  creative_status : string
+  fatigue_day : integer
+  total_days_active : integer
+  total_spend_usd : float
+  total_impressions : integer
+  total_clicks : integer
+  total_conversions : integer
+  total_revenue_usd : float
+  overall_ctr : float
+  overall_cvr : float
+  overall_ipm : float
+  overall_roas : float
+  first_7d_ctr : float
+  last_7d_ctr : float
+  ctr_decay_pct : float
+  first_7d_cvr : float
+  last_7d_cvr : float
+  cvr_decay_pct : float
+  peak_rolling_ctr_5 : float
+  peak_day_impressions : integer
+  first_7d_impressions : integer
+  first_7d_clicks : integer
+  first_7d_conversions : integer
+  last_7d_impressions : integer
+  last_7d_clicks : integer
+  last_7d_conversions : integer
+  perf_score : float
+  asset_file : string
+}
+
+TABLE(campaign_summary) {
+  * campaign_id : integer <<PK>>
+  --
+  # advertiser_id : integer <<FK>>
+  advertiser_name : string
+  app_name : string
+  vertical : string
+  objective : string
+  primary_theme : string
+  target_age_segment : string
+  target_os : string
+  countries : string
+  start_date : date
+  end_date : date
+  daily_budget_usd : integer
+  kpi_goal : string
+  total_spend_usd : float
+  total_impressions : integer
+  total_clicks : integer
+  total_conversions : integer
+  total_revenue_usd : float
+  overall_ctr : float
+  overall_cvr : float
+  overall_roas : float
+}
+
+TABLE(data_dictionary) {
+  * file_name : string <<PK>>
+  * column_name : string <<PK>>
+  --
+  data_type : string
+  description : string
+}
+
+advertisers ||--o{ campaigns : "advertiser_id"
+campaigns ||--o{ creatives : "campaign_id"
+creatives ||--|| creative_summary : "creative_id"
+creatives ||--o{ creative_daily_country_os_stats : "creative_id"
+campaigns ||--o{ creative_daily_country_os_stats : "campaign_id"
+campaigns ||--|| campaign_summary : "campaign_id"
+
+@enduml
