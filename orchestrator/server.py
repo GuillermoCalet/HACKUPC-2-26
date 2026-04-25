@@ -5,6 +5,7 @@ Run:
 """
 from __future__ import annotations
 
+import asyncio
 import os
 from pathlib import Path
 from typing import Any
@@ -114,10 +115,46 @@ async def run_debate(req: DebateRequest) -> dict[str, Any]:
     return payload
 
 
+@app.post("/debate/start")
+async def start_debate(req: DebateRequest) -> dict[str, str]:
+    try:
+        task = debate.build_task(
+            req.creative_id,
+            parquet_path=PARQUET_PATH,
+            campaign_id=CAMPAIGN_ID,
+        )
+    except debate.CreativeNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    async def run_and_store() -> None:
+        try:
+            result = await debate.run_debate(task)
+            evidence_store.save_debate_result(result.debate_id, result.creative_id, result)
+        except Exception as exc:
+            evidence_store.log_event(
+                task.task_id,
+                task.creative_id,
+                99,
+                "server_error",
+                "orchestrator",
+                {"error": str(exc)},
+            )
+
+    asyncio.create_task(run_and_store())
+    return {
+        "debate_id": task.task_id,
+        "creative_id": task.creative_id,
+        "campaign_id": task.campaign_id,
+    }
+
+
 @app.get("/debate/{debate_id}")
 def get_debate(debate_id: str) -> dict[str, Any]:
     result = evidence_store.get_debate_result(debate_id)
     if result is not None:
+        result.setdefault("events", evidence_store.get_debate_log(debate_id))
         return result
 
     events = evidence_store.get_debate_log(debate_id)

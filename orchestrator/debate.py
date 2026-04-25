@@ -599,6 +599,20 @@ async def run_debate(
 
     async with httpx.AsyncClient() as client:
         # Round 1: independent opinions. Agents do not see each other yet.
+        if log_events:
+            for card in agents:
+                _log(
+                    debate_id,
+                    task.creative_id,
+                    1,
+                    "agent_call",
+                    "orchestrator",
+                    {
+                        "from_agent": "orchestrator",
+                        "to_agent": card.name,
+                        "purpose": "request_independent_opinion",
+                    },
+                )
         round1_results = await _gather_limited(
             [
                 _post_opinion(client, card, task, 1, cfg)
@@ -624,6 +638,20 @@ async def run_debate(
         transcript.append(_transcript_block(1, "opinions", opinions_r1))
 
         # Round 2: cross-examination. Every agent sees all Round 1 opinions.
+        if log_events:
+            for card in agents:
+                _log(
+                    debate_id,
+                    task.creative_id,
+                    2,
+                    "agent_call",
+                    "orchestrator",
+                    {
+                        "from_agent": "orchestrator",
+                        "to_agent": card.name,
+                        "purpose": "request_cross_examination",
+                    },
+                )
         round2_results = await _gather_limited(
             [
                 _post_respond(client, card, task, opinions_r1, cfg)
@@ -669,6 +697,20 @@ async def run_debate(
             if name in card_by_name
         ]
 
+        if log_events:
+            for card in challenged_cards:
+                _log(
+                    debate_id,
+                    task.creative_id,
+                    3,
+                    "agent_call",
+                    "orchestrator",
+                    {
+                        "from_agent": "orchestrator",
+                        "to_agent": card.name,
+                        "purpose": "request_revision_after_challenge",
+                    },
+                )
         round3_results = await _gather_limited(
             [
                 _post_opinion(
