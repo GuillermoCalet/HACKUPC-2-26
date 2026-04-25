@@ -42,5 +42,6 @@ The JSON must match this exact schema:
   "claims": ["<plain English claim — max 3>"],
   "evidence": [
     {"type": "metric", "key": "<field name>", "value": "<value>", "source": "creative_features.parquet"}
-  ]
+  ],
+  "changed_from": null
 }

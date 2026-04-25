@@ -43,5 +43,6 @@ Respond ONLY with valid JSON. No explanation, no markdown, no preamble.
   "claims": ["<grounded claim referencing a specific visual or audience property — max 3>"],
   "evidence": [
     {"type": "<visual|categorical>", "key": "<element or property>", "value": "<what grounds this>", "source": "<creative_image|campaign_metadata>"}
-  ]
+  ],
+  "changed_from": null
 }

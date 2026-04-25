@@ -38,6 +38,18 @@ def _env_bool(name: str, default: bool = False) -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _raise_for_status(response: httpx.Response) -> None:
+    try:
+        response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        body = response.text[:1000]
+        raise httpx.HTTPStatusError(
+            f"{exc}. Response body: {body}",
+            request=exc.request,
+            response=exc.response,
+        ) from exc
+
+
 def _provider() -> str:
     return os.getenv("LLM_PROVIDER", "ollama").strip().lower()
 
@@ -74,7 +86,7 @@ def _ollama_chat(prompt: str, *, image_b64: str | None, max_tokens: int, model: 
 
     with httpx.Client(timeout=_env_float("LLM_TIMEOUT_SECONDS", 90.0)) as client:
         response = client.post(f"{base_url}/api/chat", json=payload)
-        response.raise_for_status()
+        _raise_for_status(response)
         data = response.json()
     return data.get("message", {}).get("content", "")
 
@@ -114,7 +126,7 @@ def _openai_compatible_chat(
     headers = {"Authorization": f"Bearer {api_key}"}
     with httpx.Client(timeout=_env_float("LLM_TIMEOUT_SECONDS", 90.0)) as client:
         response = client.post(f"{base_url}/chat/completions", json=payload, headers=headers)
-        response.raise_for_status()
+        _raise_for_status(response)
         data = response.json()
     return data["choices"][0]["message"]["content"]
 

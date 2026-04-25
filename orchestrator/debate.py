@@ -56,11 +56,20 @@ class DebateConfig:
     data_agent_timeout_seconds: float
     vision_agent_timeout_seconds: float
     default_agent_timeout_seconds: float
+    agent_parallelism: int
+    agent_call_delay_seconds: float
 
 
 def _env_float(name: str, default: float) -> float:
     try:
         return float(os.getenv(name, str(default)))
+    except ValueError:
+        return default
+
+
+def _env_int(name: str, default: int) -> int:
+    try:
+        return int(os.getenv(name, str(default)))
     except ValueError:
         return default
 
@@ -80,6 +89,37 @@ def default_config() -> DebateConfig:
         data_agent_timeout_seconds=_env_float("AGENT_DATA_TIMEOUT_SECONDS", 30.0),
         vision_agent_timeout_seconds=_env_float("AGENT_VISION_TIMEOUT_SECONDS", 90.0),
         default_agent_timeout_seconds=_env_float("AGENT_TIMEOUT_SECONDS", 45.0),
+        agent_parallelism=max(1, _env_int("AGENT_PARALLELISM", 1)),
+        agent_call_delay_seconds=max(0.0, _env_float("AGENT_CALL_DELAY_SECONDS", 0.0)),
+    )
+
+
+async def _gather_limited(
+    awaitables: Sequence[Any],
+    *,
+    limit: int,
+    delay_seconds: float = 0.0,
+) -> list[Any]:
+    if limit <= 1 and delay_seconds > 0:
+        results: list[Any] = []
+        for index, awaitable in enumerate(awaitables):
+            if index:
+                await asyncio.sleep(delay_seconds)
+            try:
+                results.append(await awaitable)
+            except Exception as exc:
+                results.append(exc)
+        return results
+
+    semaphore = asyncio.Semaphore(max(1, limit))
+
+    async def run(awaitable: Any) -> Any:
+        async with semaphore:
+            return await awaitable
+
+    return await asyncio.gather(
+        *(run(awaitable) for awaitable in awaitables),
+        return_exceptions=True,
     )
 
 
@@ -559,12 +599,13 @@ async def run_debate(
 
     async with httpx.AsyncClient() as client:
         # Round 1: independent opinions. Agents do not see each other yet.
-        round1_results = await asyncio.gather(
-            *(
+        round1_results = await _gather_limited(
+            [
                 _post_opinion(client, card, task, 1, cfg)
                 for card in agents
-            ),
-            return_exceptions=True,
+            ],
+            limit=cfg.agent_parallelism,
+            delay_seconds=cfg.agent_call_delay_seconds,
         )
 
         opinions_r1: list[Opinion] = []
@@ -583,12 +624,13 @@ async def run_debate(
         transcript.append(_transcript_block(1, "opinions", opinions_r1))
 
         # Round 2: cross-examination. Every agent sees all Round 1 opinions.
-        round2_results = await asyncio.gather(
-            *(
+        round2_results = await _gather_limited(
+            [
                 _post_respond(client, card, task, opinions_r1, cfg)
                 for card in agents
-            ),
-            return_exceptions=True,
+            ],
+            limit=cfg.agent_parallelism,
+            delay_seconds=cfg.agent_call_delay_seconds,
         )
 
         messages: list[Message] = []
@@ -627,8 +669,8 @@ async def run_debate(
             if name in card_by_name
         ]
 
-        round3_results = await asyncio.gather(
-            *(
+        round3_results = await _gather_limited(
+            [
                 _post_opinion(
                     client,
                     card,
@@ -639,8 +681,9 @@ async def run_debate(
                     previous_opinion=opinion_by_agent.get(card.name),
                 )
                 for card in challenged_cards
-            ),
-            return_exceptions=True,
+            ],
+            limit=cfg.agent_parallelism,
+            delay_seconds=cfg.agent_call_delay_seconds,
         )
 
         revisions: list[Opinion] = []

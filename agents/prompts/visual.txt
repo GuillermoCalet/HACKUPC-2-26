@@ -37,5 +37,6 @@ Respond ONLY with valid JSON. No explanation, no markdown, no preamble.
   "claims": ["<plain English claim grounded in a specific observable visual element — max 3>"],
   "evidence": [
     {"type": "visual", "key": "<visual element>", "value": "<what you observe>", "source": "creative_image"}
-  ]
+  ],
+  "changed_from": null
 }

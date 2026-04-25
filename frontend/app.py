@@ -155,7 +155,10 @@ def render_transcript(transcript: list):
             (3, "revisions"): "Round 3 — Revisions",
         }.get((round_num, block_type), f"Round {round_num}")
 
-        with st.expander(f"**{label}** ({len(data)} items)", expanded=(round_num == 3 and data)):
+        with st.expander(
+            f"**{label}** ({len(data)} items)",
+            expanded=(round_num == 3 and bool(data)),
+        ):
             if block_type == "opinions":
                 for op in data:
                     render_opinion(op, highlight_change=False)
@@ -234,7 +237,7 @@ with left:
         "🏛️ Convene the Boardroom",
         type="primary",
         use_container_width=True,
-        help="Runs a full 4-round AI debate for this creative. Takes ~15-30 seconds.",
+        help="Runs a full 4-round AI debate for this creative. May take several minutes on low API rate limits.",
     )
 
     load_cached_btn = st.button(
@@ -270,7 +273,7 @@ with right:
                 r = requests.post(
                     f"{ORCHESTRATOR}/debate",
                     json={"creative_id": creative_id},
-                    timeout=120,
+                    timeout=600,
                 )
                 r.raise_for_status()
                 debate_result = r.json()
