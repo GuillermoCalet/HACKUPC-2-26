@@ -530,18 +530,18 @@ div[data-testid="stToolbar"] {
 }
 
 .compact-verdict {
-  margin-top: 12px;
+  margin-top: 14px;
   border-radius: 16px;
-  padding: 12px;
+  padding: 16px;
   background: rgba(2, 6, 23, 0.52);
   border: 1px solid rgba(148, 163, 184, 0.16);
 }
 
 .compact-verdict-reasons {
-  margin-top: 10px;
+  margin-top: 12px;
   color: #cbd5e1;
-  font-size: 0.86rem;
-  line-height: 1.35;
+  font-size: 0.9rem;
+  line-height: 1.42;
 }
 
 .compact-verdict-reasons ul {
@@ -558,10 +558,12 @@ div[data-testid="stToolbar"] {
   align-items: center;
   gap: 8px;
   border-radius: 999px;
-  padding: 7px 10px;
-  font-size: 0.86rem;
+  padding: 10px 15px;
+  font-size: clamp(1.1rem, 1.8vw, 1.45rem);
   font-weight: 800;
+  letter-spacing: 0.08em;
   border: 1px solid currentColor;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.06);
 }
 
 .control-panel {
@@ -2117,8 +2119,18 @@ def render_boardroom_result(result: dict[str, Any]) -> None:
         unsafe_allow_html=True,
     )
 
-    st.markdown("#### Agent Flow")
-    render_transcript(result.get("transcript", []))
+    details_key = f"show_debate_details_{result.get('debate_id') or result.get('creative_id') or 'latest'}"
+    show_details = bool(st.session_state.get(details_key, False))
+    button_label = "Hide details" if show_details else "View more details"
+    st.markdown("#### Debate Details")
+    if st.button(button_label, key=f"{details_key}_button", use_container_width=True):
+        show_details = not show_details
+        st.session_state[details_key] = show_details
+
+    if show_details:
+        render_transcript(result.get("transcript", []))
+    else:
+        st.caption("Round-by-round details are hidden to keep the main view clean.")
 
 
 def render_round_overview() -> None:
@@ -2165,6 +2177,19 @@ def render_round_overview() -> None:
 def node_key(agent: Any) -> str:
     key = str(agent or "orchestrator")
     return AGENT_NODE_KEYS.get(key, key.replace("_", "-"))
+
+
+def communication_lines(from_agent: Any, to_agent: Any) -> list[str]:
+    source = node_key(from_agent)
+    target = node_key(to_agent)
+    if to_agent in (None, "", "ALL"):
+        return list(LINE_KEYS)
+    if source == "orchestrator" and target in LINE_KEYS:
+        return [target]
+    if target == "orchestrator" and source in LINE_KEYS:
+        return [source]
+    lines = [line for line in (source, target) if line in LINE_KEYS]
+    return list(dict.fromkeys(lines))
 
 
 def node_css(source: str | None, target_agent: str | None, node: str) -> str:
@@ -2415,14 +2440,8 @@ def render_loading_boardroom(
     explicit_lines = phase.get("lines")
     if isinstance(explicit_lines, list):
         active_lines = [str(line) for line in explicit_lines]
-    elif phase.get("to_agent") == "ALL":
-        active_lines = list(LINE_KEYS)
     else:
-        active_lines = [
-            line
-            for line in [source, target, phase.get("line")]
-            if line in LINE_KEYS
-        ]
+        active_lines = communication_lines(phase.get("from_agent"), phase.get("to_agent"))
     status_title = "Boardroom complete" if completed else "Boardroom in session"
     status_copy = (
         "Consensus is ready below."
@@ -2680,6 +2699,53 @@ def event_to_live_phases(event: dict[str, Any]) -> list[dict[str, Any]]:
     }]
 
 
+def render_live_state(
+    table_slot: Any,
+    progress_bar: Any,
+    feed_slot: Any,
+    creative_id: str,
+    current_phase: dict[str, Any],
+    events: list[dict[str, Any]],
+    *,
+    completed: bool = False,
+) -> None:
+    table_slot.empty()
+    with table_slot.container():
+        render_loading_boardroom(creative_id, current_phase, completed=completed)
+    progress_bar.progress(
+        int(current_phase.get("progress", 10)),
+        text=f"{current_phase.get('round')} - {current_phase.get('route')}",
+    )
+    feed_slot.empty()
+    with feed_slot.container():
+        render_live_feed(events)
+
+
+def live_phases_from_events(raw_events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    phases: list[dict[str, Any]] = []
+    for raw_event in raw_events:
+        phases.extend(event_to_live_phases(raw_event))
+    return phases
+
+
+def render_completed_workflow(creative_id: str, result: dict[str, Any]) -> None:
+    phases = live_phases_from_events(result.get("events") or [])
+    if not phases:
+        return
+    final_phase = {
+        "progress": 100,
+        "round": "Complete",
+        "agent": "Orchestrator",
+        "from_agent": "orchestrator",
+        "to_agent": "ALL",
+        "route": route_label("orchestrator", "ALL"),
+        "text": "Consensus complete. Final recommendation is ready below.",
+    }
+    render_loading_boardroom(creative_id, final_phase, completed=True)
+    st.progress(100, text="Complete - final recommendation ready")
+    render_live_feed(phases + [final_phase])
+
+
 def run_live_debate(creative_id: str) -> dict[str, Any] | None:
     start_response = requests.post(
         f"{ORCHESTRATOR}/debate/start",
@@ -2722,6 +2788,15 @@ def run_live_debate(creative_id: str) -> dict[str, Any] | None:
                 seen_event_keys.add(key)
                 events.append(phase)
                 current_phase = phase
+                render_live_state(
+                    table_slot,
+                    progress_bar,
+                    feed_slot,
+                    creative_id,
+                    current_phase,
+                    events,
+                )
+                time.sleep(0.35)
 
         if payload.get("transcript") and payload.get("consensus"):
             result = payload
@@ -2735,25 +2810,25 @@ def run_live_debate(creative_id: str) -> dict[str, Any] | None:
                 "text": "Consensus complete. Final recommendation is ready below.",
             }
             events.append(final_phase)
-            table_slot.empty()
-            with table_slot.container():
-                render_loading_boardroom(creative_id, final_phase, completed=True)
-            progress_bar.progress(100, text="Complete - final recommendation ready")
-            feed_slot.empty()
-            with feed_slot.container():
-                render_live_feed(events)
+            render_live_state(
+                table_slot,
+                progress_bar,
+                feed_slot,
+                creative_id,
+                final_phase,
+                events,
+                completed=True,
+            )
             return result
 
-        table_slot.empty()
-        with table_slot.container():
-            render_loading_boardroom(creative_id, current_phase)
-        progress_bar.progress(
-            int(current_phase.get("progress", 10)),
-            text=f"{current_phase.get('round')} - {current_phase.get('route')}",
+        render_live_state(
+            table_slot,
+            progress_bar,
+            feed_slot,
+            creative_id,
+            current_phase,
+            events,
         )
-        feed_slot.empty()
-        with feed_slot.container():
-            render_live_feed(events)
 
         time.sleep(1.0)
 
@@ -2765,6 +2840,7 @@ def render_boardroom(creatives: list[dict[str, Any]]) -> None:
     creative_id = str(selected.get("creative_id"))
     result_key = f"result_{creative_id}"
     result = st.session_state.get(result_key)
+    ran_live_this_turn = False
     st.markdown("### Creative Boardroom")
     st.caption("Five agent personas analyze the selected creative, challenge each other, and produce one recommendation.")
 
@@ -2806,6 +2882,7 @@ def render_boardroom(creatives: list[dict[str, Any]]) -> None:
                 result = run_live_debate(creative_id)
                 if result:
                     st.session_state[result_key] = result
+                    ran_live_this_turn = True
                     with creative_panel_slot.container():
                         render_compact_creative_panel(selected, result)
             except requests.exceptions.Timeout:
@@ -2816,6 +2893,8 @@ def render_boardroom(creatives: list[dict[str, Any]]) -> None:
         if result:
             with creative_panel_slot.container():
                 render_compact_creative_panel(selected, result)
+            if not ran_live_this_turn:
+                render_completed_workflow(creative_id, result)
             render_boardroom_result(result)
         else:
             st.info("No verdict yet. Start the boardroom to generate the live agent debate and final recommendation.")

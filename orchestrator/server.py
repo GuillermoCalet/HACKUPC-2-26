@@ -168,4 +168,7 @@ def get_cached_result_for_creative(creative_id: str) -> dict[str, Any]:
     result = evidence_store.get_latest_debate_result_for_creative(creative_id)
     if result is None:
         raise HTTPException(status_code=404, detail="No cached result for this creative")
+    debate_id = str(result.get("debate_id") or "")
+    if debate_id:
+        result.setdefault("events", evidence_store.get_debate_log(debate_id))
     return result
