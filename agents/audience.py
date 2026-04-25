@@ -2,15 +2,16 @@
 Audience Simulator agent — Port 8005.
 
 Simulates how a realistic target audience member reacts to the creative.
-Model: claude-sonnet-4-6 with vision.
+Model: configured by LLM_PROVIDER / OLLAMA_MODEL_VISION.
 """
 import base64
 from pathlib import Path
 
 from orchestrator.a2a import AgentCard, Task, Opinion, Message
 from orchestrator.base import make_agent
+from agents.llm_client import generate_text, generate_vision
 from agents._agent_helpers import (
-    get_client, load_prompt, parse_opinion, parse_messages,
+    load_prompt, parse_opinion, parse_messages,
     context_str, challenges_str, opinions_str,
 )
 
@@ -21,9 +22,6 @@ CARD = AgentCard(
     endpoint="http://localhost:8005",
     vote_weight=0.5,
 )
-
-MODEL = "claude-sonnet-4-6"
-
 
 def _build_persona(context: dict) -> str:
     return (
@@ -61,22 +59,13 @@ async def opinion_fn(task: Task, prior_messages: list[Message]) -> Opinion:
 
     image_b64 = _load_image_b64(task.image_path)
     if image_b64:
-        content = [
-            {
-                "type": "image",
-                "source": {"type": "base64", "media_type": "image/png", "data": image_b64},
-            },
-            {"type": "text", "text": user_text},
-        ]
+        raw = generate_vision(user_text, image_b64, max_tokens=1024)
     else:
-        content = user_text + "\n(Image unavailable — base analysis on metadata only)"
-
-    response = get_client().messages.create(
-        model=MODEL,
-        max_tokens=1024,
-        messages=[{"role": "user", "content": content}],
-    )
-    return parse_opinion(response.content[0].text, CARD.name, round_num)
+        raw = generate_text(
+            user_text + "\n(Image unavailable — base analysis on metadata only)",
+            max_tokens=1024,
+        )
+    return parse_opinion(raw, CARD.name, round_num)
 
 
 async def respond_fn(task: Task, opinions: list[Opinion]) -> list[Message]:
@@ -87,12 +76,8 @@ async def respond_fn(task: Task, opinions: list[Opinion]) -> list[Message]:
         .replace("{context}", context_str(task.context))
         .replace("{opinions}", opinions_str(opinions))
     )
-    response = get_client().messages.create(
-        model=MODEL,
-        max_tokens=1024,
-        messages=[{"role": "user", "content": user_msg}],
-    )
-    return parse_messages(response.content[0].text, CARD.name)
+    raw = generate_text(user_msg, max_tokens=1024)
+    return parse_messages(raw, CARD.name)
 
 
 app = make_agent(CARD, opinion_fn, respond_fn)

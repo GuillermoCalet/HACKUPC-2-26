@@ -2,14 +2,15 @@
 Fatigue Detective agent — Port 8002.
 
 Detects whether a creative is losing effectiveness over time.
-Model: claude-haiku-4-5-20251001
+Model: configured by LLM_PROVIDER / OLLAMA_MODEL_TEXT.
 """
 import json
 
 from orchestrator.a2a import AgentCard, Task, Opinion, Message
 from orchestrator.base import make_agent
+from agents.llm_client import generate_text
 from agents._agent_helpers import (
-    get_client, load_prompt, parse_opinion, parse_messages,
+    load_prompt, parse_opinion, parse_messages,
     context_str, challenges_str, opinions_str,
 )
 
@@ -20,9 +21,6 @@ CARD = AgentCard(
     endpoint="http://localhost:8002",
     vote_weight=1.0,
 )
-
-MODEL = "claude-haiku-4-5-20251001"
-
 
 def _compute_fatigue_signals(context: dict) -> str:
     signals: dict[str, object] = {}
@@ -52,12 +50,8 @@ async def opinion_fn(task: Task, prior_messages: list[Message]) -> Opinion:
         .replace("{fatigue_signals}", _compute_fatigue_signals(task.context))
         .replace("{challenges}", challenges_str(prior_messages))
     )
-    response = get_client().messages.create(
-        model=MODEL,
-        max_tokens=1024,
-        messages=[{"role": "user", "content": user_msg}],
-    )
-    return parse_opinion(response.content[0].text, CARD.name, round_num)
+    raw = generate_text(user_msg, max_tokens=1024)
+    return parse_opinion(raw, CARD.name, round_num)
 
 
 async def respond_fn(task: Task, opinions: list[Opinion]) -> list[Message]:
@@ -68,12 +62,8 @@ async def respond_fn(task: Task, opinions: list[Opinion]) -> list[Message]:
         .replace("{context}", context_str(task.context))
         .replace("{opinions}", opinions_str(opinions))
     )
-    response = get_client().messages.create(
-        model=MODEL,
-        max_tokens=1024,
-        messages=[{"role": "user", "content": user_msg}],
-    )
-    return parse_messages(response.content[0].text, CARD.name)
+    raw = generate_text(user_msg, max_tokens=1024)
+    return parse_messages(raw, CARD.name)
 
 
 app = make_agent(CARD, opinion_fn, respond_fn)

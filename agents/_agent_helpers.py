@@ -3,31 +3,45 @@ import json
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
-from anthropic import Anthropic
 from orchestrator.a2a import Evidence, Message, Opinion
 
-_client: Anthropic | None = None
-
 PROMPTS_DIR = Path(__file__).parent / "prompts"
-
-
-def get_client() -> Anthropic:
-    global _client
-    if _client is None:
-        _client = Anthropic()
-    return _client
 
 
 def load_prompt(name: str) -> str:
     return (PROMPTS_DIR / f"{name}.txt").read_text()
 
 
+def extract_json(raw: str) -> dict:
+    """Extract the first JSON object from model output.
+
+    Local models sometimes wrap the answer in code fences or thinking tags even
+    when prompted not to. The debate layer needs resilience more than elegance.
+    """
+    text = raw.strip()
+    if text.startswith("```"):
+        text = text.strip("`")
+        if text.lower().startswith("json"):
+            text = text[4:].strip()
+
+    decoder = json.JSONDecoder()
+    for idx, char in enumerate(text):
+        if char != "{":
+            continue
+        try:
+            obj, _ = decoder.raw_decode(text[idx:])
+            if isinstance(obj, dict):
+                return obj
+        except json.JSONDecodeError:
+            continue
+    raise ValueError("No JSON object found in model output")
+
+
 def parse_opinion(raw: str, agent_name: str, round_num: int) -> Opinion:
     """Parse LLM output into an Opinion, with a safe fallback."""
     try:
-        data = json.loads(raw)
+        data = extract_json(raw)
         data["agent"] = agent_name
         data["round"] = round_num
         # Coerce evidence items
@@ -48,7 +62,7 @@ def parse_opinion(raw: str, agent_name: str, round_num: int) -> Opinion:
 def parse_messages(raw: str, from_agent: str) -> list[Message]:
     """Parse LLM output into a list of Message objects."""
     try:
-        data = json.loads(raw)
+        data = extract_json(raw)
         msgs = data.get("messages", [])
         result = []
         for m in msgs:

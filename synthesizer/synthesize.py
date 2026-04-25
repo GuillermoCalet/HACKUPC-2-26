@@ -7,19 +7,10 @@ the marketer-facing verdict card.
 import json
 from pathlib import Path
 
-from anthropic import Anthropic
+from agents._agent_helpers import extract_json
+from agents.llm_client import generate_text
 
-_client: Anthropic | None = None
 PROMPT_PATH = Path(__file__).parent.parent / "agents" / "prompts" / "synthesizer.txt"
-
-MODEL = "claude-sonnet-4-6"
-
-
-def _get_client() -> Anthropic:
-    global _client
-    if _client is None:
-        _client = Anthropic()
-    return _client
 
 
 def synthesize(
@@ -40,14 +31,10 @@ def synthesize(
         .replace("{final_opinions}", json.dumps(final_opinions, indent=2, default=str))
     )
 
-    response = _get_client().messages.create(
-        model=MODEL,
-        max_tokens=1024,
-        messages=[{"role": "user", "content": user_msg}],
-    )
+    raw = generate_text(user_msg, max_tokens=1024)
 
     try:
-        return json.loads(response.content[0].text)
+        return extract_json(raw)
     except Exception:
         verdicts = [o.get("verdict") for o in final_opinions if isinstance(o, dict)]
         from collections import Counter

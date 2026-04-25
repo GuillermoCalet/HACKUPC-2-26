@@ -2,12 +2,13 @@
 Performance Analyst agent — Port 8001.
 
 Quantifies how a creative performs relative to campaign peers on hard metrics.
-Model: claude-haiku-4-5-20251001
+Model: configured by LLM_PROVIDER / OLLAMA_MODEL_TEXT.
 """
 from orchestrator.a2a import AgentCard, Task, Opinion, Message
 from orchestrator.base import make_agent
+from agents.llm_client import generate_text
 from agents._agent_helpers import (
-    get_client, load_prompt, parse_opinion, parse_messages,
+    load_prompt, parse_opinion, parse_messages,
     context_str, challenges_str, opinions_str,
 )
 
@@ -19,9 +20,6 @@ CARD = AgentCard(
     vote_weight=1.0,
 )
 
-MODEL = "claude-haiku-4-5-20251001"
-
-
 async def opinion_fn(task: Task, prior_messages: list[Message]) -> Opinion:
     round_num = 3 if prior_messages else 1
     prompt = load_prompt("performance")
@@ -30,12 +28,8 @@ async def opinion_fn(task: Task, prior_messages: list[Message]) -> Opinion:
         .replace("{context}", context_str(task.context))
         .replace("{challenges}", challenges_str(prior_messages))
     )
-    response = get_client().messages.create(
-        model=MODEL,
-        max_tokens=1024,
-        messages=[{"role": "user", "content": user_msg}],
-    )
-    return parse_opinion(response.content[0].text, CARD.name, round_num)
+    raw = generate_text(user_msg, max_tokens=1024)
+    return parse_opinion(raw, CARD.name, round_num)
 
 
 async def respond_fn(task: Task, opinions: list[Opinion]) -> list[Message]:
@@ -46,12 +40,8 @@ async def respond_fn(task: Task, opinions: list[Opinion]) -> list[Message]:
         .replace("{context}", context_str(task.context))
         .replace("{opinions}", opinions_str(opinions))
     )
-    response = get_client().messages.create(
-        model=MODEL,
-        max_tokens=1024,
-        messages=[{"role": "user", "content": user_msg}],
-    )
-    return parse_messages(response.content[0].text, CARD.name)
+    raw = generate_text(user_msg, max_tokens=1024)
+    return parse_messages(raw, CARD.name)
 
 
 app = make_agent(CARD, opinion_fn, respond_fn)
