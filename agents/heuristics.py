@@ -95,6 +95,23 @@ def _useful_performance_signal(context: dict[str, Any]) -> bool:
     )
 
 
+def _scale_ready_signal(context: dict[str, Any]) -> bool:
+    """Strong enough business/performance signal that non-blocking agents can SCALE."""
+
+    if _low_sample(context) or _confirmed_fatigue(context):
+        return False
+    status = _text(context, "creative_status", default="").lower()
+    ctr_pct = _metric(context, "ctr_pct", default=0.5)
+    ipm_pct = _metric(context, "ipm_pct", default=0.5)
+    cvr_pct = _metric(context, "cvr_pct", default=0.5)
+    spend_pct = _metric(context, "spend_pct", "spend_share_pct", default=0.5)
+    roas = _roas(context)
+    top_performer = "top_performer" in status
+    strong_metrics = ctr_pct >= 0.75 and ipm_pct >= 0.75 and cvr_pct >= 0.45
+    efficient_spend = roas >= 1.20 and spend_pct <= 0.70
+    return efficient_spend and (top_performer or strong_metrics)
+
+
 def _pause_harm_is_clear(context: dict[str, Any]) -> bool:
     spend_pct = _metric(context, "spend_pct", "spend_share_pct", default=0.5)
     ctr_pct = _metric(context, "ctr_pct", default=0.5)
@@ -145,12 +162,38 @@ def calibrate_opinion(
 
     if agent_name == "fatigue_detective" and opinion.verdict == "PAUSE":
         if not _pause_harm_is_clear(context):
-            next_verdict: Verdict = "PIVOT" if _useful_performance_signal(context) else "TEST_NEXT"
+            next_verdict: Verdict = "PIVOT" if _confirmed_fatigue(context) and _useful_performance_signal(context) else "TEST_NEXT"
             updates = {
                 "verdict": next_verdict,
                 "confidence": min(opinion.confidence, 0.74),
                 "claims": [
-                    "Fatigue is a refresh signal, not a kill signal: this creative still has useful historical or peer-relative performance, so the safer recommendation is to change the execution instead of pausing the concept completely.",
+                    "Fatigue does not justify a full pause here; without clear waste or confirmed fatigue, the safer recommendation is a controlled next decision rather than killing the creative.",
+                    *opinion.claims[:2],
+                ],
+            }
+
+    elif agent_name == "fatigue_detective" and opinion.verdict == "PIVOT":
+        if _scale_ready_signal(context):
+            updates = {
+                "verdict": "SCALE",
+                "confidence": min(max(opinion.confidence, 0.68), 0.76),
+                "claims": [
+                    "Fatigue does not block scale: this is a profitable top performer with no confirmed fatigue flag, so the right fatigue stance is scale with monitoring.",
+                    *opinion.claims[:2],
+                ],
+            }
+
+    elif agent_name == "performance_analyst" and opinion.verdict == "PAUSE":
+        if not _pause_harm_is_clear(context):
+            if _scale_ready_signal(context):
+                next_verdict = "SCALE"
+            else:
+                next_verdict = "PIVOT" if _confirmed_fatigue(context) and _useful_performance_signal(context) else "TEST_NEXT"
+            updates = {
+                "verdict": next_verdict,
+                "confidence": min(opinion.confidence, 0.70),
+                "claims": [
+                    "The performance read does not show clear budget harm, so PAUSE is too severe; use a measured next test unless fatigue is confirmed.",
                     *opinion.claims[:2],
                 ],
             }
@@ -163,6 +206,17 @@ def calibrate_opinion(
                 "confidence": min(opinion.confidence, 0.72),
                 "claims": [
                     "Financial risk does not justify a full pause because this creative is not clearly losing money at scale; reduce risk with a controlled next test or refreshed execution instead.",
+                    *opinion.claims[:2],
+                ],
+            }
+
+    elif agent_name == "risk_officer" and opinion.verdict in {"PIVOT", "TEST_NEXT"}:
+        if _scale_ready_signal(context):
+            updates = {
+                "verdict": "SCALE",
+                "confidence": min(max(opinion.confidence, 0.74), 0.82),
+                "claims": [
+                    "Risk does not block scale: return is above break-even, spend concentration is not excessive, and volume is sufficient.",
                     *opinion.claims[:2],
                 ],
             }
@@ -250,6 +304,13 @@ def fallback_opinion(
             verdict = "TEST_NEXT"
             confidence = 0.62
             claims = ["The creative is too young to judge fatigue reliably."]
+        elif _scale_ready_signal(context):
+            verdict = "SCALE"
+            confidence = 0.70
+            claims = [
+                "There is no confirmed fatigue flag and the creative is strong enough that fatigue does not block controlled scale.",
+                "Scale should still be monitored because lifetime click interest has declined from launch.",
+            ]
         elif fatigue and _pause_harm_is_clear(context):
             verdict = "PAUSE"
             confidence = 0.82
@@ -257,12 +318,18 @@ def fallback_opinion(
                 "Fatigue is paired with weak efficiency or poor return, so continuing this exact asset risks wasting spend.",
                 "Pause this execution until the creative is refreshed or budget is moved to healthier assets.",
             ]
-        elif fatigue:
+        elif confirmed_fatigue:
             verdict = "PIVOT"
             confidence = 0.74 if _useful_performance_signal(context) else 0.66
             claims = [
                 "Recent attention has decayed, but the creative still has useful performance history, so refresh the execution instead of killing the concept.",
                 "The next version should keep the proven hook while changing the opening or call-to-action treatment.",
+            ]
+        elif fatigue:
+            verdict = "TEST_NEXT"
+            confidence = 0.62
+            claims = [
+                "Lifetime click interest has dropped, but there is no confirmed fatigue label; validate the trend before forcing a creative pivot.",
             ]
         else:
             if _useful_performance_signal(context) and not low_sample:

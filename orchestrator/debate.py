@@ -443,6 +443,21 @@ def _has_useful_signal(context: dict[str, Any]) -> bool:
     )
 
 
+def _scale_ready_signal(context: dict[str, Any]) -> bool:
+    if _has_too_little_data(context) or _confirmed_fatigue(context):
+        return False
+    status = _text_value(context, "creative_status", default="").lower()
+    ctr_pct = _numeric(context, "ctr_pct") or 0.0
+    ipm_pct = _numeric(context, "ipm_pct") or 0.0
+    cvr_pct = _numeric(context, "cvr_pct") or 0.0
+    spend_pct = _numeric(context, "spend_pct", "spend_share_pct") or 1.0
+    roas = _numeric(context, "overall_roas", "roas") or 0.0
+    top_performer = "top_performer" in status
+    strong_metrics = ctr_pct >= 0.75 and ipm_pct >= 0.75 and cvr_pct >= 0.45
+    efficient_spend = roas >= 1.20 and spend_pct <= 0.70
+    return efficient_spend and (top_performer or strong_metrics)
+
+
 def _pause_harm_is_clear(context: dict[str, Any], final_opinions: list[Opinion]) -> bool:
     roas = _numeric(context, "overall_roas", "roas")
     spend_pct = _numeric(context, "spend_pct", "spend_share_pct") or 0.0
@@ -490,6 +505,8 @@ def _pause_replacement(scores: dict[str, float], context: dict[str, Any]) -> Ver
 def _select_without_scale(scores: dict[str, float]) -> Verdict:
     candidates = {verdict: score for verdict, score in scores.items() if verdict != "SCALE"}
     if not candidates:
+        return "TEST_NEXT"
+    if candidates.get("PIVOT", 0.0) == 0 and candidates.get("TEST_NEXT", 0.0) == 0:
         return "TEST_NEXT"
     return max(candidates, key=candidates.get)  # type: ignore[return-value]
 
@@ -553,7 +570,7 @@ def compute_consensus(
         ),
         None,
     )
-    if verdict == "SCALE" and risk_block is not None:
+    if verdict == "SCALE" and risk_block is not None and not _scale_ready_signal(context):
         _move_score(scores_after_overrides, "SCALE", "PIVOT")
         verdict = "PIVOT"
         applied_overrides.append("risk_officer_blocks_scale")
