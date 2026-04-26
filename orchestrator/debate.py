@@ -35,7 +35,8 @@ from orchestrator.a2a import (
 
 
 VERDICTS: tuple[Verdict, ...] = ("SCALE", "PAUSE", "PIVOT", "TEST_NEXT")
-DEFAULT_PARQUET_PATH = Path(os.getenv("PARQUET_PATH", "pipeline/creative_features.parquet"))
+BASE_DIR = Path(__file__).resolve().parent.parent
+DEFAULT_PARQUET_PATH = Path(os.getenv("PARQUET_PATH", str(BASE_DIR / "pipeline/creative_features.parquet")))
 DEFAULT_AGENT_URLS = (
     "http://localhost:8001",
     "http://localhost:8002",
