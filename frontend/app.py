@@ -2833,8 +2833,7 @@ def render_loading_boardroom(
 <div class="loading-boardroom">
   <div class="loading-title">
     <strong>{html.escape(status_title)}</strong>
-    <span class="loading-creative">Creative {html.escape(creative_id)}</span>
-    {route_html}
+    <span class="loading-creative">Creative {html.escape(creative_id)}</span>{route_html}
     <span class="loading-copy">{html.escape(status_copy)}</span>
   </div>
   <div class="boardroom-stage">
@@ -3252,30 +3251,12 @@ def render_boardroom(creatives: list[dict[str, Any]]) -> None:
             """,
             unsafe_allow_html=True,
         )
-        autorun_key = f"autorun_{creative_id}"
-        auto_start = False
-        if not st.session_state.get(autorun_key) and result_key not in st.session_state:
-            st.session_state[autorun_key] = True
-            auto_start = True
-
         cols = st.columns(2)
-        with cols[0]:
-            run_btn = st.button("▶  Re-Convene Boardroom", type="primary", use_container_width=True)
-        with cols[1]:
-            load_cached_btn = st.button("Load Cached Result", use_container_width=True)
+        run_btn = st.button("▶  Convene the Boardroom", type="primary", use_container_width=True)
 
-        if load_cached_btn:
-            try:
-                response = requests.get(f"{ORCHESTRATOR}/debate/{creative_id}/result", timeout=8)
-                if response.status_code == 200:
-                    result = response.json()
-                    st.session_state[result_key] = result
-                else:
-                    st.warning("No cached result found for this creative.")
-            except Exception as exc:
-                st.error(f"Error loading cached result: {exc}")
 
-        if run_btn or auto_start:
+
+        if run_btn:
             try:
                 result = run_live_debate(creative_id)
                 if result:
@@ -3295,6 +3276,7 @@ def render_boardroom(creatives: list[dict[str, Any]]) -> None:
                 render_completed_workflow(creative_id, result)
             render_boardroom_result(result)
         else:
+            render_loading_boardroom(creative_id, {"round": "Pre-convene"}, completed=False)
             st.info("No verdict yet. Start the boardroom to generate the live agent debate and final recommendation.")
 
 
