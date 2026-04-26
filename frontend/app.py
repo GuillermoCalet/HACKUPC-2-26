@@ -2068,6 +2068,11 @@ def render_creative_analytics(creatives: list[dict[str, Any]], metrics: dict[str
             unsafe_allow_html=True,
         )
 
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("Proceed to Creative Boardroom →", key="btn_to_boardroom", type="primary", use_container_width=True):
+        st.session_state["active_screen"] = "Creative Boardroom"
+        st.rerun()
+
 
 def render_evidence_items(evidence: list[dict[str, Any]]) -> None:
     if not evidence:
