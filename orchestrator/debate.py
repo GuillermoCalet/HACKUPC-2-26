@@ -193,6 +193,14 @@ def fake_creative_context(creative_id: str = "demo_creative") -> dict[str, Any]:
     }
 
 
+def fix_image_path(row: dict[str, Any]) -> dict[str, Any]:
+    if "image_path" in row and row["image_path"]:
+        base_dir = Path(__file__).resolve().parent.parent
+        filename = Path(row["image_path"]).name
+        row["image_path"] = str(base_dir / "Smadex_Creative_Intelligence_Dataset_FULL" / "assets" / filename)
+    return row
+
+
 def load_creative_rows(parquet_path: Path | str = DEFAULT_PARQUET_PATH) -> list[dict[str, Any]]:
     path = Path(parquet_path)
     if not path.exists():
@@ -201,7 +209,7 @@ def load_creative_rows(parquet_path: Path | str = DEFAULT_PARQUET_PATH) -> list[
     df = pd.read_parquet(path)
     if "creative_id" not in df.columns:
         raise ValueError(f"{path} must contain a creative_id column")
-    return [json_safe(row) for row in df.to_dict(orient="records")]
+    return [fix_image_path(json_safe(row)) for row in df.to_dict(orient="records")]
 
 
 def load_creative_context(
@@ -222,7 +230,7 @@ def load_creative_context(
     if row.empty:
         raise CreativeNotFoundError(f"Creative {creative_id} not found in {path}")
 
-    return json_safe(row.iloc[0].to_dict())
+    return fix_image_path(json_safe(row.iloc[0].to_dict()))
 
 
 def build_task(
