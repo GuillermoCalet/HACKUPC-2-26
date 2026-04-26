@@ -31,3 +31,7 @@ Make sure you have Python 3.10+ installed.
 chmod +x start.sh
 ./start.sh
 ```
+Laia Alaminos
+Guillermo Calet
+Mohamed Dari
+Oscar Nagl
