@@ -126,6 +126,15 @@ VERDICT_MEANINGS = {
     "TEST_NEXT": "Run another controlled test before making a bigger spend decision.",
 }
 
+ROUND_LABELS = {
+    0: "Briefing",
+    1: "Independent Opinions",
+    2: "Cross-Examination",
+    3: "Revisions",
+    4: "Weighted Consensus",
+    99: "Agent Errors",
+}
+
 BOARDROOM_ROUNDS = [
     {
         "number": 1,
@@ -554,43 +563,6 @@ header[data-testid="stHeader"] {
   font-size: 1rem;
 }
 
-.compact-verdict {
-  margin-top: 18px;
-  border-radius: 18px;
-  padding: clamp(18px, 1.4vw, 24px);
-  background: rgba(2, 6, 23, 0.52);
-  border: 1px solid rgba(148, 163, 184, 0.16);
-}
-
-.compact-verdict-reasons {
-  margin-top: 14px;
-  color: #cbd5e1;
-  font-size: 0.98rem;
-  line-height: 1.48;
-}
-
-.compact-verdict-reasons ul {
-  margin: 6px 0 0 18px;
-  padding: 0;
-}
-
-.compact-verdict-reasons li {
-  margin-bottom: 4px;
-}
-
-.compact-verdict-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border-radius: 999px;
-  padding: 13px 18px;
-  font-size: clamp(1.65rem, 2.6vw, 3.1rem);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  border: 1px solid currentColor;
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.06);
-}
-
 .control-panel {
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 22px;
@@ -884,6 +856,25 @@ header[data-testid="stHeader"] {
   text-align: center;
   transform: translate(-50%, -50%);
   border-color: rgba(77, 216, 255, 0.38);
+}
+
+.diagram-round-label {
+  position: absolute;
+  z-index: 6;
+  top: calc(50% - 112px);
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: min(72%, 360px);
+  padding: 7px 13px;
+  border-radius: 999px;
+  color: #e5edf8;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(77, 216, 255, 0.32);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.24);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: center;
+  white-space: normal;
 }
 
 .agent-node {
@@ -1389,26 +1380,6 @@ button[kind="primary"], .stButton > button {
   font-size: 0.9rem;
   margin-top: 8px;
 }
-.verdict-hero-reasons {
-  margin: 20px auto 0;
-  max-width: 560px;
-  text-align: left;
-}
-.verdict-reason-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.verdict-reason-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  margin-top: 7px;
-}
-.verdict-reason-text { color: #cbd5e1; font-size: 0.96rem; line-height: 1.5; }
-
 /* --- Analytics screen improvements --- */
 .analytics-section-head {
   color: var(--fg1);
@@ -2494,25 +2465,6 @@ def render_final_verdict_hero(result: dict[str, Any]) -> None:
     verdict = str(verdict_card.get("verdict") or result.get("weighted_verdict") or "TEST_NEXT")
     color = VERDICT_COLORS.get(verdict, "#94a3b8")
     confidence = safe_float((result.get("consensus") or {}).get("confidence"))
-    reasons = verdict_reasons(result, limit=3)
-    if not reasons:
-        reasons = [VERDICT_MEANINGS.get(verdict, "Final recommendation from weighted agent consensus.")]
-
-    reason_rows = "".join(
-        f"""<div class="verdict-reason-row">
-  <div class="verdict-reason-dot" style="background:{color};box-shadow:0 0 8px {color};"></div>
-  <div class="verdict-reason-text">{html.escape(r)}</div>
-</div>"""
-        for r in reasons
-    )
-    dissent = dissent_summary(result)
-    dissent_html = (
-        f'<div style="margin-top:14px;padding:10px 14px;border-radius:12px;'
-        f'background:rgba(148,163,184,0.07);border:1px solid rgba(148,163,184,0.15);'
-        f'color:#9fb1c8;font-size:0.87rem;max-width:520px;margin-left:auto;margin-right:auto;">'
-        f'<strong style="color:#e5edf8;">Dissent:</strong> {html.escape(dissent)}</div>'
-        if dissent else ""
-    )
 
     st.markdown(
         f"""
@@ -2520,8 +2472,6 @@ def render_final_verdict_hero(result: dict[str, Any]) -> None:
   <div class="verdict-hero-eyebrow" style="color:{color};">Boardroom Verdict</div>
   <div class="verdict-hero-label" style="font-size:clamp(2.6rem,5vw,4.2rem);color:{color};">{html.escape(verdict)}</div>
   <div class="verdict-hero-sub">{html.escape(agreement_text(result))} — {int(confidence * 100)}% agent confidence</div>
-  <div class="verdict-hero-reasons">{reason_rows}</div>
-  {dissent_html}
 </div>
         """,
         unsafe_allow_html=True,
@@ -2823,35 +2773,6 @@ def render_compact_creative_panel(creative: dict[str, Any], result: dict[str, An
         else f'<div class="boardroom-asset-frame creative-placeholder">{title}</div>'
     )
 
-    verdict_html = ""
-    if result:
-        verdict_card = result.get("verdict_card") or result.get("synthesis") or {}
-        verdict = verdict_card.get("verdict") or result.get("weighted_verdict") or "TEST_NEXT"
-        color = VERDICT_COLORS.get(str(verdict), "#94a3b8")
-        confidence_text = agreement_text(result)
-        reasons = verdict_reasons(result, limit=3)
-        if not reasons:
-            reasons = [VERDICT_MEANINGS.get(str(verdict), "Final recommendation from weighted agent consensus.")]
-        reason_items = "".join(f"<li>{html.escape(reason)}</li>" for reason in reasons)
-        dissent = dissent_summary(result)
-        dissent_html = (
-            f'<div class="small-context"><strong>Why not unanimous:</strong> {html.escape(dissent)}</div>'
-            if dissent
-            else ""
-        )
-        verdict_html = f"""
-  <div class="compact-verdict">
-    <div class="mini-label">Boardroom verdict</div>
-    <div class="compact-verdict-label" style="color:{color};margin-top:8px;">{html.escape(str(verdict))}</div>
-    <div class="small-context">{html.escape(confidence_text)}</div>
-    <div class="compact-verdict-reasons">
-      <strong>Why this recommendation</strong>
-      <ul>{reason_items}</ul>
-    </div>
-    {dissent_html}
-  </div>
-        """
-
     st.markdown(
         f"""
 <div class="boardroom-creative-card">
@@ -2876,7 +2797,6 @@ def render_compact_creative_panel(creative: dict[str, Any], result: dict[str, An
       <div class="mini-value">{spend_pressure(creative.get("spend_share_pct"))}</div>
     </div>
   </div>
-  {verdict_html}
 </div>
         """,
         unsafe_allow_html=True,
@@ -2903,6 +2823,7 @@ def render_loading_boardroom(
         if completed
         else str(phase.get("text") or "Agents are exchanging evidence.")
     )
+    phase_label = str(phase.get("round") or ("Complete" if completed else "Boardroom"))
     route = phase.get("route")
     route_html = (
         f'<span class="loading-route">{html.escape(str(route))}</span>'
@@ -2927,6 +2848,7 @@ def render_loading_boardroom(
       <line class="connector-line{active_line_css(active_lines, "audience")}" x1="50" y1="50" x2="50" y2="88"></line>
     </svg>
     <div class="table-orbit"></div>
+    <div class="diagram-round-label">{html.escape(phase_label)}</div>
     <div class="moderator-node{node_css(source, target, "orchestrator")}">
       <strong>Orchestrator</strong>
       <span>routes rounds and consensus</span>
@@ -2999,6 +2921,14 @@ def purpose_text(purpose: Any) -> str:
     }.get(str(purpose), "asking for the next contribution")
 
 
+def round_display_name(round_num: Any) -> str:
+    try:
+        round_int = int(round_num)
+    except (TypeError, ValueError):
+        return str(round_num or "Workflow")
+    return ROUND_LABELS.get(round_int, f"Round {round_int}")
+
+
 def phase_progress(round_num: Any, event_type: str) -> int:
     try:
         round_int = int(round_num)
@@ -3026,7 +2956,7 @@ def event_to_live_phases(event: dict[str, Any]) -> list[dict[str, Any]]:
     if event_type == "task":
         return [{
             "progress": progress,
-            "round": f"Round {round_num}",
+            "round": round_display_name(round_num),
             "agent": "Orchestrator",
             "from_agent": "orchestrator",
             "to_agent": "ALL",
@@ -3050,7 +2980,7 @@ def event_to_live_phases(event: dict[str, Any]) -> list[dict[str, Any]]:
         to_agent = payload.get("to_agent") or event_agent
         return [{
             "progress": progress,
-            "round": f"Round {round_num}",
+            "round": round_display_name(round_num),
             "agent": route_name(from_agent),
             "from_agent": from_agent,
             "to_agent": to_agent,
@@ -3071,7 +3001,7 @@ def event_to_live_phases(event: dict[str, Any]) -> list[dict[str, Any]]:
             text = f"{verb.title()} recommendation: {verdict}. Reason: {first_claim}"
         return [{
             "progress": progress,
-            "round": f"Round {round_num}",
+            "round": round_display_name(round_num),
             "agent": route_name(agent),
             "from_agent": agent,
             "to_agent": "orchestrator",
@@ -3088,7 +3018,7 @@ def event_to_live_phases(event: dict[str, Any]) -> list[dict[str, Any]]:
             msg_type = str(message.get("type", "message")).replace("_", " ")
             phases.append({
                 "progress": min(74, progress + index),
-                "round": f"Round {round_num}",
+                "round": round_display_name(round_num),
                 "agent": route_name(from_agent),
                 "from_agent": from_agent,
                 "to_agent": to_agent,
@@ -3101,7 +3031,7 @@ def event_to_live_phases(event: dict[str, Any]) -> list[dict[str, Any]]:
         error_text = payload.get("error") if isinstance(payload, dict) else str(payload)
         return [{
             "progress": progress,
-            "round": f"Round {round_num}",
+            "round": round_display_name(round_num),
             "agent": route_name(event_agent),
             "from_agent": event_agent,
             "to_agent": "orchestrator",
@@ -3112,7 +3042,7 @@ def event_to_live_phases(event: dict[str, Any]) -> list[dict[str, Any]]:
     if event_type == "consensus" and isinstance(payload, dict):
         return [{
             "progress": progress,
-            "round": "Round 4",
+            "round": round_display_name(4),
             "agent": "Orchestrator",
             "from_agent": "orchestrator",
             "to_agent": "ALL",
@@ -3145,7 +3075,7 @@ def event_to_live_phases(event: dict[str, Any]) -> list[dict[str, Any]]:
 
     return [{
         "progress": progress,
-        "round": f"Round {round_num}",
+        "round": round_display_name(round_num),
         "agent": route_name(event_agent),
         "from_agent": event_agent,
         "to_agent": "orchestrator",
