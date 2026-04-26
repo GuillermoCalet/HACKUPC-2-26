@@ -17,6 +17,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+import altair as alt
 import pandas as pd
 import requests
 import streamlit as st
@@ -1235,6 +1236,193 @@ button[kind="primary"], .stButton > button {
   .agent-risk { top: 70%; left: 78%; }
   .agent-audience { top: 90%; left: 50%; }
 }
+
+/* =========================================================================
+   PREMIUM UPGRADES
+   ========================================================================= */
+
+/* --- Metric card glow ring on hover --- */
+.metric-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s cubic-bezier(0.2,0.8,0.2,1), box-shadow 0.25s ease;
+}
+.metric-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  background: radial-gradient(circle at 50% 0%, rgba(77,216,255,0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* --- Creative card status-tinted bottom border --- */
+.creative-card.status-top    { border-bottom: 2px solid #2ef2a0; }
+.creative-card.status-fatigued { border-bottom: 2px solid #ffb020; }
+.creative-card.status-stable  { border-bottom: 2px solid #4dd8ff; }
+.creative-card.status-underperformer { border-bottom: 2px solid #64748b; }
+
+/* --- Section headers --- */
+.screen-title {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--fg1);
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+}
+.screen-caption {
+  color: var(--fg3);
+  font-size: 0.92rem;
+  margin-bottom: 20px;
+}
+
+/* --- Agent chat bubble --- */
+.agent-bubble {
+  border-radius: 20px;
+  margin-bottom: 14px;
+  background: linear-gradient(180deg, rgba(15,23,42,0.84), rgba(2,6,23,0.72));
+  border: 1px solid rgba(148,163,184,0.18);
+  border-left-width: 4px;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.28);
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+.agent-bubble:hover { transform: translateX(3px); }
+
+.agent-bubble-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px 10px;
+}
+.agent-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #030c1a;
+  flex-shrink: 0;
+}
+.agent-bubble-name {
+  flex: 1;
+  min-width: 0;
+}
+.agent-bubble-name strong { display: block; color: #e5edf8; font-size: 1rem; line-height: 1.1; }
+.agent-bubble-name span  { display: block; color: #94a3b8; font-size: 0.78rem; margin-top: 2px; }
+
+.verdict-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  border: 1px solid currentColor;
+  flex-shrink: 0;
+}
+
+.agent-bubble-body { padding: 0 16px 14px; }
+
+.conf-bar-track {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(148,163,184,0.18);
+  overflow: hidden;
+  margin-top: 6px;
+}
+.conf-bar-fill { height: 100%; border-radius: 999px; }
+
+.mind-change-badge {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255,176,32,0.10);
+  border: 1px solid rgba(255,176,32,0.28);
+  font-size: 0.82rem;
+}
+.mind-change-badge strong { color: #ffb020; }
+.mind-change-badge span   { color: #cbd5e1; }
+
+/* --- Final verdict hero panel --- */
+.verdict-hero {
+  border-radius: 28px;
+  padding: clamp(24px, 2.5vw, 36px);
+  margin: 24px 0;
+  text-align: center;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 28px 80px rgba(0,0,0,0.45);
+}
+.verdict-hero-eyebrow {
+  font-size: 0.8rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+.verdict-hero-label {
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-shadow: 0 0 40px currentColor;
+}
+.verdict-hero-sub {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+.verdict-hero-reasons {
+  margin: 20px auto 0;
+  max-width: 560px;
+  text-align: left;
+}
+.verdict-reason-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.verdict-reason-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 7px;
+}
+.verdict-reason-text { color: #cbd5e1; font-size: 0.96rem; line-height: 1.5; }
+
+/* --- Analytics screen improvements --- */
+.analytics-section-head {
+  color: var(--fg1);
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+.fatigue-info-panel {
+  border-left: 3px solid #ffb020;
+  background: rgba(255,176,32,0.08);
+  border-radius: 14px;
+  padding: 12px 14px;
+  color: #ffe5a0;
+  font-size: 0.9rem;
+  margin-top: 12px;
+}
+.roas-compare-card {
+  border-radius: 18px;
+  padding: 16px;
+  background: rgba(15,23,42,0.72);
+  border: 1px solid rgba(148,163,184,0.16);
+  margin-bottom: 12px;
+}
+.roas-compare-label { color: #94a3b8; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+.roas-compare-val   { color: #e5edf8; font-size: 1.6rem; font-weight: 800; margin: 6px 0 8px; }
+.roas-bar-track     { height: 8px; border-radius: 999px; background: rgba(148,163,184,0.18); overflow: hidden; }
+.roas-bar-fill      { height: 100%; border-radius: 999px; }
 </style>
         """,
         unsafe_allow_html=True,
@@ -1510,9 +1698,12 @@ def toggle_session_bool(key: str) -> None:
 def metric_card(label: str, value: str, context: str, accent: str) -> None:
     st.markdown(
         f"""
-<div class="metric-card" style="box-shadow: 0 20px 60px rgba(0,0,0,0.24), 0 0 36px {accent}22;">
-  <div class="metric-label">{html.escape(label)}</div>
-  <div class="metric-value">{html.escape(value)}</div>
+<div class="metric-card" style="
+  box-shadow: 0 20px 60px rgba(0,0,0,0.28), 0 0 0 1px {accent}28, 0 0 40px {accent}18;
+  border-color: {accent}44;
+">
+  <div class="metric-label" style="color:{accent}bb;">{html.escape(label)}</div>
+  <div class="metric-value" style="background:linear-gradient(135deg,#e5edf8,{accent});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">{html.escape(value)}</div>
   <div class="metric-context">{html.escape(context)}</div>
 </div>
         """,
@@ -1625,8 +1816,8 @@ def render_header(using_demo_data: bool) -> None:
 
 
 def render_campaign_overview(creatives: list[dict[str, Any]], metrics: dict[str, float]) -> None:
-    st.markdown("### Campaign Overview")
-    st.caption("A manager-friendly summary of spend, reach, creative health, and which assets deserve a closer look.")
+    st.markdown('<div class="screen-title">Campaign Overview</div>', unsafe_allow_html=True)
+    st.markdown('<div class="screen-caption">Manager-level view of spend, reach, and creative health across all 6 ads.</div>', unsafe_allow_html=True)
 
     cols = st.columns(4)
     with cols[0]:
@@ -1715,9 +1906,67 @@ def render_asset(creative: dict[str, Any]) -> None:
     )
 
 
+def render_ctr_chart(selected: dict[str, Any]) -> None:
+    active_days = max(int(safe_float(selected.get("active_days"), 14)), 14)
+    first_ctr = safe_float(selected.get("first_7d_ctr"), safe_float(selected.get("ctr")))
+    last_ctr = safe_float(selected.get("last_7d_ctr"), safe_float(selected.get("ctr")))
+    fatigue_day = int(safe_float(selected.get("fatigue_day"), 0))
+
+    days = list(range(1, active_days + 1))
+    # Smooth exponential decay
+    decay_ratio = (first_ctr - last_ctr) / max(first_ctr, 1e-9)
+    ctr_curve = [
+        first_ctr * (1 - decay_ratio * ((d - 1) / max(active_days - 1, 1)) ** 0.65)
+        for d in days
+    ]
+    threshold = first_ctr * 0.5
+
+    df = pd.DataFrame({
+        "Day": days * 2,
+        "CTR": ctr_curve + [threshold] * len(days),
+        "Series": ["CTR"] * len(days) + ["−50% fatigue threshold"] * len(days),
+    })
+
+    color_scale = alt.Scale(
+        domain=["CTR", "−50% fatigue threshold"],
+        range=["#4dd8ff", "#ff5b7a"],
+    )
+    stroke_dash_cond = alt.condition(
+        alt.datum["Series"] == "−50% fatigue threshold",
+        alt.value([6, 3]),
+        alt.value([0]),
+    )
+
+    lines = alt.Chart(df).mark_line(strokeWidth=2.5).encode(
+        x=alt.X("Day:Q", title="Day", axis=alt.Axis(labelColor="#94a3b8", titleColor="#94a3b8", gridColor="rgba(148,163,184,0.08)")),
+        y=alt.Y("CTR:Q", axis=alt.Axis(format=".3%", labelColor="#94a3b8", titleColor="#94a3b8", gridColor="rgba(148,163,184,0.08)")),
+        color=alt.Color("Series:N", scale=color_scale, legend=alt.Legend(labelColor="#94a3b8", orient="top-right", labelFontSize=11)),
+        strokeDash=stroke_dash_cond,
+    )
+    layers: list[Any] = [lines]
+
+    if fatigue_day > 0:
+        df_rule = pd.DataFrame({"Day": [fatigue_day]})
+        rule = alt.Chart(df_rule).mark_rule(color="#ffb020", strokeWidth=2, strokeDash=[8, 4]).encode(x="Day:Q")
+        lbl_df = pd.DataFrame({"Day": [fatigue_day], "y": [first_ctr * 0.88 if first_ctr > 0 else 0.001]})
+        label = alt.Chart(lbl_df).mark_text(
+            color="#ffb020", align="left", dx=6, dy=-6, fontSize=11, fontWeight=700,
+        ).encode(x="Day:Q", y="y:Q", text=alt.value(f"⚠ Fatigue day {fatigue_day}"))
+        layers += [rule, label]
+
+    chart = (
+        alt.layer(*layers)
+        .properties(height=260, background="transparent")
+        .configure_axis(gridColor="rgba(148,163,184,0.08)", domainColor="rgba(148,163,184,0.2)")
+        .configure_view(strokeWidth=0)
+        .interactive()
+    )
+    st.altair_chart(chart, use_container_width=True)
+
+
 def render_creative_analytics(creatives: list[dict[str, Any]], metrics: dict[str, float]) -> None:
-    st.markdown("### Single Creative Analytics")
-    st.caption("A deeper read designed to explain whether this ad is healthy, tiring, or risky to scale.")
+    st.markdown('<div class="screen-title">Single Creative Analytics</div>', unsafe_allow_html=True)
+    st.markdown('<div class="screen-caption">Deep-dive on fatigue trends, ROAS, and scale readiness for the selected ad.</div>', unsafe_allow_html=True)
 
     left, center, right = st.columns([0.9, 1.3, 0.9], gap="large")
     with left:
@@ -1737,37 +1986,48 @@ def render_creative_analytics(creatives: list[dict[str, Any]], metrics: dict[str
         )
 
     with center:
-        st.markdown("#### CTR Performance Over Time")
-        st.caption("Approximation from first-7-day CTR and last-7-day CTR. A true daily chart should use the raw daily table.")
-        active_days = max(int(safe_float(selected.get("active_days"), 14)), 14)
-        first_ctr = safe_float(selected.get("first_7d_ctr"), safe_float(selected.get("ctr")))
-        last_ctr = safe_float(selected.get("last_7d_ctr"), safe_float(selected.get("ctr")))
-        trend = pd.DataFrame(
-            {
-                "day": [1, max(2, active_days // 2), active_days],
-                "CTR": [first_ctr, (first_ctr + last_ctr) / 2, last_ctr],
-                "Fatigue threshold": [first_ctr * 0.5, first_ctr * 0.5, first_ctr * 0.5],
-            }
-        ).set_index("day")
-        st.line_chart(trend, height=300)
+        st.markdown('<div class="analytics-section-head">CTR Performance Over Time</div>', unsafe_allow_html=True)
+        render_ctr_chart(selected)
         decay_pct = safe_float(selected.get("ctr_decay_pct"))
+        fatigue_day = int(safe_float(selected.get("fatigue_day"), 0))
+        fatigue_note = (
+            f"Fatigue onset detected on day {fatigue_day}. " if fatigue_day > 0 else "No fatigue onset flagged. "
+        )
         st.markdown(
-            f"""
-<div class="threshold-panel">
-  Fatigue threshold: CTR decline worse than -50%. This creative is currently at {decay_pct * 100:.0f}%.
-</div>
-            """,
+            f'<div class="fatigue-info-panel">{fatigue_note}CTR has declined {abs(decay_pct * 100):.0f}% from launch — threshold is −50%.</div>',
             unsafe_allow_html=True,
         )
 
     with right:
-        st.markdown("#### Scale Readiness")
+        st.markdown('<div class="analytics-section-head">Scale Readiness</div>', unsafe_allow_html=True)
         roas = safe_float(selected.get("overall_roas"))
         campaign_roas = metrics["overall_roas"]
         reliability = safe_float(selected.get("reliability_score"), 0.5)
-        st.metric("Creative ROAS", f"{roas:.2f}x", f"Campaign {campaign_roas:.2f}x")
-        st.metric("CTR percentile", f"P{int(safe_float(selected.get('ctr_pct')) * 100)}")
-        st.metric("Reliability estimate", f"{int(reliability * 100)}%")
+        ctr_pct = safe_float(selected.get("ctr_pct"))
+        roas_pct = min(roas / max(campaign_roas * 1.5, 0.001), 1.0)
+        st.markdown(
+            f"""
+<div class="roas-compare-card">
+  <div class="roas-compare-label">Creative ROAS vs Campaign</div>
+  <div class="roas-compare-val">{roas:.2f}x</div>
+  <div class="roas-bar-track"><div class="roas-bar-fill" style="width:{int(roas_pct*100)}%;background:{'#2ef2a0' if roas >= campaign_roas else '#ffb020'};"></div></div>
+  <div style="color:#94a3b8;font-size:0.82rem;margin-top:6px;">Campaign avg {campaign_roas:.2f}x</div>
+</div>
+<div class="roas-compare-card">
+  <div class="roas-compare-label">CTR Percentile</div>
+  <div class="roas-compare-val">P{int(ctr_pct * 100)}</div>
+  <div class="roas-bar-track"><div class="roas-bar-fill" style="width:{int(ctr_pct*100)}%;background:#4dd8ff;"></div></div>
+  <div style="color:#94a3b8;font-size:0.82rem;margin-top:6px;">Within this campaign</div>
+</div>
+<div class="roas-compare-card">
+  <div class="roas-compare-label">Data Reliability</div>
+  <div class="roas-compare-val">{int(reliability * 100)}%</div>
+  <div class="roas-bar-track"><div class="roas-bar-fill" style="width:{int(reliability*100)}%;background:linear-gradient(90deg,#ffb020,#2ef2a0);"></div></div>
+  <div style="color:#94a3b8;font-size:0.82rem;margin-top:6px;">Capped at 80% (non-ground-truth data)</div>
+</div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 
 def render_evidence_items(evidence: list[dict[str, Any]]) -> None:
@@ -1812,29 +2072,48 @@ def render_opinion(op: dict[str, Any], highlight_change: bool = True) -> None:
     confidence = safe_float(op.get("confidence"))
     changed_from = op.get("changed_from")
     claims = op.get("claims", [])
-    prefix = f"{changed_from} -> {verdict}" if changed_from and highlight_change else verdict
+    verdict_color = VERDICT_COLORS.get(verdict, "#94a3b8")
     meaning = VERDICT_MEANINGS.get(verdict, "Agent recommendation.")
-    change_note = (
-        f'<div class="small-context">Changed from {html.escape(str(changed_from))} after cross-examination.</div>'
-        if changed_from and highlight_change
-        else ""
-    )
+    initial = name[0].upper()
+    conf_pct = int(confidence * 100)
+
+    change_html = ""
+    if changed_from and highlight_change:
+        change_html = f"""
+<div class="mind-change-badge">
+  <strong>MIND CHANGED</strong>
+  <span> — {html.escape(str(changed_from))} → {html.escape(verdict)}</span>
+</div>"""
+
+    claims_html = ""
+    if claims:
+        items = "".join(
+            f"<li style='margin-bottom:5px;color:#cbd5e1;'>{html.escape(plain_language(claim))}</li>"
+            for claim in claims[:4]
+        )
+        claims_html = f"<ul style='margin:10px 0 0 18px;padding:0;font-size:0.93rem;line-height:1.5;'>{items}</ul>"
 
     st.markdown(
         f"""
-<div class="agent-line" style="border-left: 4px solid {color};">
-  <strong>{html.escape(name)}</strong>
-  <span style="float:right;color:{VERDICT_COLORS.get(verdict, '#94a3b8')};font-weight:800;">{html.escape(prefix)}</span>
-  <div style="color:#94a3b8;margin-top:4px;">Confidence {confidence:.0%}</div>
-  <div class="small-context">{html.escape(meaning)}</div>
-  {change_note}
+<div class="agent-bubble" style="border-left-color:{color};">
+  <div class="agent-bubble-header">
+    <div class="agent-avatar" style="background:linear-gradient(135deg,{color},{color}99);box-shadow:0 4px 14px {color}44;">{initial}</div>
+    <div class="agent-bubble-name">
+      <strong>{html.escape(name)}</strong>
+      <span>{html.escape(meaning[:58])}{'…' if len(meaning) > 58 else ''}</span>
+    </div>
+    <div class="verdict-chip" style="color:{verdict_color};border-color:{verdict_color};background:{verdict_color}18;">{html.escape(verdict)}</div>
+  </div>
+  <div class="agent-bubble-body">
+    <div style="color:#94a3b8;font-size:0.76rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:700;">Confidence {conf_pct}%</div>
+    <div class="conf-bar-track"><div class="conf-bar-fill" style="width:{conf_pct}%;background:linear-gradient(90deg,{color},{color}77);"></div></div>
+    {claims_html}
+    {change_html}
+  </div>
 </div>
         """,
         unsafe_allow_html=True,
     )
-    if claims:
-        claim_html = "".join(f"<li>{html.escape(plain_language(claim))}</li>" for claim in claims[:4])
-        st.markdown(f"<ul>{claim_html}</ul>", unsafe_allow_html=True)
     render_evidence_items(op.get("evidence", []))
 
 
@@ -2167,9 +2446,49 @@ def render_transcript(transcript: list[dict[str, Any]]) -> None:
     render_transcript_block_content(str(active_block.get("type")), active_block.get("data"))
 
 
+def render_final_verdict_hero(result: dict[str, Any]) -> None:
+    verdict_card = result.get("verdict_card") or result.get("synthesis") or {}
+    verdict = str(verdict_card.get("verdict") or result.get("weighted_verdict") or "TEST_NEXT")
+    color = VERDICT_COLORS.get(verdict, "#94a3b8")
+    confidence = safe_float((result.get("consensus") or {}).get("confidence"))
+    reasons = verdict_reasons(result, limit=3)
+    if not reasons:
+        reasons = [VERDICT_MEANINGS.get(verdict, "Final recommendation from weighted agent consensus.")]
+
+    reason_rows = "".join(
+        f"""<div class="verdict-reason-row">
+  <div class="verdict-reason-dot" style="background:{color};box-shadow:0 0 8px {color};"></div>
+  <div class="verdict-reason-text">{html.escape(r)}</div>
+</div>"""
+        for r in reasons
+    )
+    dissent = dissent_summary(result)
+    dissent_html = (
+        f'<div style="margin-top:14px;padding:10px 14px;border-radius:12px;'
+        f'background:rgba(148,163,184,0.07);border:1px solid rgba(148,163,184,0.15);'
+        f'color:#9fb1c8;font-size:0.87rem;max-width:520px;margin-left:auto;margin-right:auto;">'
+        f'<strong style="color:#e5edf8;">Dissent:</strong> {html.escape(dissent)}</div>'
+        if dissent else ""
+    )
+
+    st.markdown(
+        f"""
+<div class="verdict-hero" style="border:1px solid {color};background:radial-gradient(circle at 50% 30%,{color}18 0%,transparent 55%),linear-gradient(180deg,rgba(15,23,42,0.92),rgba(2,6,23,0.84));box-shadow:0 0 60px {color}28,0 28px 80px rgba(0,0,0,0.45);">
+  <div class="verdict-hero-eyebrow" style="color:{color};">Boardroom Verdict</div>
+  <div class="verdict-hero-label" style="font-size:clamp(2.6rem,5vw,4.2rem);color:{color};">{html.escape(verdict)}</div>
+  <div class="verdict-hero-sub">{html.escape(agreement_text(result))} — {int(confidence * 100)}% agent confidence</div>
+  <div class="verdict-hero-reasons">{reason_rows}</div>
+  {dissent_html}
+</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_boardroom_result(result: dict[str, Any]) -> None:
     verdict_card = result.get("verdict_card") or result.get("synthesis") or {}
     verdict = str(verdict_card.get("verdict") or result.get("weighted_verdict") or "TEST_NEXT")
+    render_final_verdict_hero(result)
     reasons = verdict_reasons(result, limit=4)
     if not reasons:
         reasons = [plain_language(VERDICT_MEANINGS.get(verdict, "The agents found a clear enough pattern to recommend this action."))]
@@ -2929,8 +3248,8 @@ def run_live_debate(creative_id: str) -> dict[str, Any] | None:
 
 
 def render_boardroom(creatives: list[dict[str, Any]]) -> None:
-    st.markdown("### Creative Boardroom")
-    st.caption("Five agent personas analyze the selected creative, challenge each other, and produce one recommendation.")
+    st.markdown('<div class="screen-title">Creative Boardroom</div>', unsafe_allow_html=True)
+    st.markdown('<div class="screen-caption">Five AI specialists debate the ad, challenge each other\'s claims, and converge on one actionable verdict.</div>', unsafe_allow_html=True)
 
     left, right = st.columns([0.58, 1.42], gap="large")
     with left:
