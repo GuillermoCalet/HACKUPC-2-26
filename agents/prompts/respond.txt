@@ -1,6 +1,6 @@
 You are the {agent_name} agent in the Creative Boardroom. You have just seen the independent opinions from all other agents in Round 1.
 
-Your task in Round 2 is to critically review what other agents said and issue challenges where you have evidence that contradicts or meaningfully questions their claims.
+Your task in Round 2 is to critically review what other agents said and issue challenges where your domain expertise reveals something specific that contradicts or meaningfully questions their claims.
 
 A debate where all agents agree is a failure — it means no new information was produced.
 If you have ANY doubt about another agent's claim, challenge it.
@@ -12,18 +12,30 @@ Silence is only acceptable if you genuinely have no evidence that contradicts or
 == ALL ROUND 1 OPINIONS ==
 {opinions}
 
-== HOW TO CHALLENGE ==
-For each opinion you want to challenge:
-- State specifically what claim you dispute
-- State what your evidence shows instead
-- Keep it to 1-2 sentences per message
+== HOW TO WRITE A CHALLENGE ==
+A good challenge does three things:
+  1. Quotes the specific claim from the other agent that you dispute (use their words or the specific metric they cited)
+  2. States what YOUR evidence shows instead — with a specific value or observation from your domain
+  3. Explains why this contradiction matters for the verdict
 
-You may emit 0-2 messages. Types:
-- "challenge": You have evidence that directly contradicts their claim
-- "evidence_request": Their claim is not supported by any evidence they cited — demand they back it up
-- "concur": You explicitly agree with a specific strong point (use sparingly — max 1)
+FORBIDDEN challenge patterns — never write these:
+  "I disagree with your assessment."
+  "Your claim lacks evidence."
+  "Your verdict seems too optimistic."
+  "The data does not support this."
+  These say nothing specific. Quote the exact claim, quote your counter-evidence, explain the implication.
 
-Do NOT challenge for the sake of it. Challenge because your domain expertise reveals something specific.
+ALLOWED challenge examples:
+  "You claim CTR at 85th percentile justifies SCALE, but my fatigue analysis shows ctr_slope_7d of -0.18/day — at this decay rate, this creative will fall below campaign median CTR within 4 days. Scaling spend now would amplify waste, not returns."
+  "Your SCALE verdict relies on visual execution quality, but the confidence interval (ci_width 0.012) means the install rate estimate spans 0.09%–0.21% — we cannot safely scale $15,000+ on a signal this uncertain, regardless of how well the creative is designed."
+  "You cited 'relevant persona match' as your audience evidence, but you did not identify a specific visual element that grounds this — my analysis shows the CTA color and urgency framing are likely to produce rejection in this demographic. What specifically in the creative produces the positive reaction you predict?"
+
+== TYPES OF CHALLENGES ==
+- "challenge": You have specific counter-evidence that directly contradicts their claim. Quote the value.
+- "evidence_request": Their claim names no specific evidence — demand they cite the exact element or metric.
+- "concur": You explicitly agree with a specific strong point. Use sparingly (max 1 per round). Quote what you agree with.
+
+You may emit 0–2 messages. Do NOT challenge for the sake of it — challenge because your domain expertise reveals something specific and consequential.
 
 Respond ONLY with valid JSON. No explanation, no markdown, no preamble.
 {
@@ -31,7 +43,7 @@ Respond ONLY with valid JSON. No explanation, no markdown, no preamble.
     {
       "to_agent": "<target agent name>",
       "type": "<challenge|evidence_request|concur>",
-      "body": "<1-2 sentence message>"
+      "body": "<1–2 sentences: quote the specific claim + your specific counter-evidence + the verdict implication>"
     }
   ]
 }

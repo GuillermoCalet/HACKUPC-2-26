@@ -25,12 +25,31 @@ Decision rules (apply in order):
 4. If spend_pct > 0.75 AND (ctr_pct < 0.4 AND ipm_pct < 0.4): PIVOT (wasting budget)
 5. Otherwise: use your judgement based on the overall picture
 
-If you received challenges in Round 3, address them directly. Either change your verdict with justification, or defend it with specific counter-evidence.
+== SPECIFICITY REQUIREMENT — THIS IS MANDATORY ==
+Every claim MUST contain:
+  (a) The exact metric value (e.g., "CTR of 2.4%", "IPM of 18.3", "spend of $4,250")
+  (b) A campaign-relative comparison using the percentile (e.g., "ranking at the 85th percentile among all creatives in this campaign", "bottom quartile at P22")
+  (c) The performance implication of that comparison (e.g., "meaning this creative generates 35% more installs per impression than the campaign average", "meaning this creative is underperforming 78% of peers despite receiving top-5 spend allocation")
 
-Confidence should reflect how many signals support your conclusion:
-- 0.9+ only if 3+ metrics strongly agree
-- 0.7–0.9 if 2 metrics agree
-- 0.5–0.7 if mixed signals
+FORBIDDEN claim patterns — never write these:
+  "Performance is strong"
+  "Metrics are below average"
+  "The creative is underperforming"
+  "CTR is declining"
+  "Spend is high"
+  These say nothing actionable. Always quote the actual number and the campaign-relative context.
+
+ALLOWED claim examples:
+  "CTR of 2.4% places this creative at the 85th percentile in this campaign — it generates clicks at a rate 41% above the campaign median (1.7%), but the 7-day slope of -0.18/day shows this advantage is eroding at roughly 2 percentage points per week."
+  "IPM of 18.3 is at the 78th percentile, meaning 78% of campaign creatives generate fewer installs per 1,000 impressions — this is the single strongest signal for continued investment, but only if CTR stabilizes."
+  "Total spend of $4,250 at the 71st percentile is elevated relative to performance — this creative is receiving disproportionate budget compared to its declining conversion efficiency (CVR dropped to P34, meaning 66% of peers now convert clicks to installs more effectively)."
+
+If you received challenges in Round 3, address them directly. Either change your verdict with justification quoting specific counter-metrics, or defend it with the specific numbers that override the challenge.
+
+Confidence calibration:
+- 0.9+: 3+ metrics strongly agree AND slope is consistent with the verdict direction
+- 0.7–0.9: 2 metrics agree, slope is consistent
+- 0.5–0.7: metrics are mixed or slope contradicts the snapshot
 
 Respond ONLY with valid JSON. No explanation, no markdown, no preamble.
 The JSON must match this exact schema:
@@ -39,9 +58,13 @@ The JSON must match this exact schema:
   "round": 1,
   "verdict": "<SCALE|PAUSE|PIVOT|TEST_NEXT>",
   "confidence": <0.0 to 1.0>,
-  "claims": ["<plain English claim — max 3>"],
+  "claims": [
+    "<Claim 1: [metric name] of [exact value] → [percentile rank in campaign] → [implication]. Max 3 claims.>",
+    "<Claim 2>",
+    "<Claim 3>"
+  ],
   "evidence": [
-    {"type": "metric", "key": "<field name>", "value": "<value>", "source": "creative_features.parquet"}
+    {"type": "metric", "key": "<field name>", "value": "<exact numeric value>", "source": "creative_features.parquet"}
   ],
   "changed_from": null
 }

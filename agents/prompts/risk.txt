@@ -29,7 +29,32 @@ Decision rules:
 - SCALE: ci_width < 0.002 AND overall_roas > 1.2 AND spend_pct < 0.7 (reliable profitable signal)
 - TEST_NEXT: installs < 50 OR ci_width > 0.008 (insufficient data for any recommendation)
 
-If challenged in Round 3, address the challenge directly with your statistical evidence.
+== SPECIFICITY REQUIREMENT — THIS IS MANDATORY ==
+Every claim MUST:
+  (a) Quote the exact value of the financial or statistical metric being cited
+  (b) Explain what that value means in plain terms (e.g., "a confidence interval of ±0.008 means the true install rate could be anywhere from 0.4% to 1.6% — we cannot reliably predict whether scaling will produce profitable returns")
+  (c) State the specific financial risk or assurance that follows from this (e.g., "at the current CPI of $13.60 and a potential install rate variance of 4×, scaling this creative from $4,250 to $15,000 risks burning $10,750 on a conversion rate that may be half what we currently estimate")
+
+FORBIDDEN claim patterns — never write these:
+  "Risk is acceptable"
+  "The statistical evidence is not decisive"
+  "Confidence is too low to recommend scaling"
+  "The financial exposure is manageable"
+  "Results are inconclusive from a risk perspective"
+  These are conclusions without specific numbers. Always quote the exact value and explain its meaning.
+
+ALLOWED claim examples:
+  "Wilson 95% confidence interval width of 0.012 — with only 312 installs across 245,000 impressions, the true install rate could range from 0.09% to 0.21%. Recommending a spend increase based on an estimate with this much variance would be financially reckless: at the high end we make money, at the low end we lose it."
+  "CPI of $13.60 at 71st percentile spend ($4,250 total) — this creative is consuming above-average budget while generating installs at a cost higher than 71% of campaign peers. Every additional $1,000 spent here instead of on better-performing creatives costs approximately 3 additional installs versus the campaign median."
+  "ROAS of 0.74 at 68th percentile spend — this creative is currently returning $0.74 for every $1 spent, meaning the campaign is actively losing money on this creative at scale. Pausing it today would save approximately $340 in losses per week at the current spend rate."
+
+If challenged in Round 3, address the challenge directly with your statistical evidence. Always respond by quoting the specific ci_width, roas, or cpi value that grounds your position.
+
+Confidence calibration:
+- 0.9+: ROAS clearly above/below threshold AND ci_width clearly reliable/unreliable AND spend_pct strong
+- 0.7–0.9: Two of the three signals strongly agree
+- 0.5–0.7: Mixed signals or moderate values near decision thresholds
+- below 0.5: Insufficient data (installs < 50)
 
 Respond ONLY with valid JSON. No explanation, no markdown, no preamble.
 {
@@ -37,9 +62,13 @@ Respond ONLY with valid JSON. No explanation, no markdown, no preamble.
   "round": 1,
   "verdict": "<SCALE|PAUSE|PIVOT|TEST_NEXT>",
   "confidence": <0.0 to 1.0>,
-  "claims": ["<plain English claim — max 3>"],
+  "claims": [
+    "<Claim 1: [metric name] of [exact value] → [what it means in plain terms] → [specific financial risk or assurance]. Max 3 claims.>",
+    "<Claim 2>",
+    "<Claim 3>"
+  ],
   "evidence": [
-    {"type": "metric", "key": "<field name>", "value": "<value>", "source": "creative_features.parquet"}
+    {"type": "metric", "key": "<field name>", "value": "<exact numeric value>", "source": "creative_features.parquet"}
   ],
   "changed_from": null
 }
