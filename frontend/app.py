@@ -365,8 +365,11 @@ def inject_css() -> None:
   color: var(--text);
 }
 
-div[data-testid="stToolbar"] {
+div[data-testid="stToolbar"],
+header[data-testid="stHeader"] {
   display: none;
+  visibility: hidden;
+  height: 0;
 }
 
 .block-container {
