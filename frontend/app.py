@@ -415,6 +415,11 @@ div[data-testid="stToolbar"] {
   line-height: 0.92;
   font-weight: 800;
   letter-spacing: 0;
+  background: linear-gradient(135deg, #4dd8ff 0%, #2ef2a0 50%, #b98cff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
 }
 
 .hero-copy {
@@ -440,6 +445,13 @@ div[data-testid="stToolbar"] {
   background:
     linear-gradient(180deg, rgba(30, 41, 59, 0.78), rgba(15, 23, 42, 0.68));
   box-shadow: 0 20px 60px rgba(0,0,0,0.24);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.metric-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.35), 0 0 40px var(--cyan)22;
+  border-color: rgba(77, 216, 255, 0.4);
 }
 
 .metric-label {
@@ -472,6 +484,13 @@ div[data-testid="stToolbar"] {
   background:
     linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(2, 6, 23, 0.70));
   box-shadow: 0 20px 60px rgba(0,0,0,0.30);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.creative-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 28px 70px rgba(0,0,0,0.40);
+  border-color: rgba(148, 163, 184, 0.40);
 }
 
 .creative-image {
@@ -712,11 +731,13 @@ div[data-testid="stToolbar"] {
   margin-bottom: 8px;
   border: 1px solid rgba(148, 163, 184, 0.18);
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.78), rgba(2, 6, 23, 0.58));
+  transition: all 0.3s ease;
 }
 
 .round-tile-active {
   border-color: var(--cyan);
-  box-shadow: 0 0 28px rgba(77, 216, 255, 0.12);
+  box-shadow: 0 0 28px rgba(77, 216, 255, 0.22);
+  transform: translateX(4px);
 }
 
 .round-number {
