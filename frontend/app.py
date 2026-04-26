@@ -3252,9 +3252,15 @@ def render_boardroom(creatives: list[dict[str, Any]]) -> None:
             """,
             unsafe_allow_html=True,
         )
+        autorun_key = f"autorun_{creative_id}"
+        auto_start = False
+        if not st.session_state.get(autorun_key) and result_key not in st.session_state:
+            st.session_state[autorun_key] = True
+            auto_start = True
+
         cols = st.columns(2)
         with cols[0]:
-            run_btn = st.button("▶  Convene the Boardroom", type="primary", use_container_width=True)
+            run_btn = st.button("▶  Re-Convene Boardroom", type="primary", use_container_width=True)
         with cols[1]:
             load_cached_btn = st.button("Load Cached Result", use_container_width=True)
 
@@ -3269,7 +3275,7 @@ def render_boardroom(creatives: list[dict[str, Any]]) -> None:
             except Exception as exc:
                 st.error(f"Error loading cached result: {exc}")
 
-        if run_btn:
+        if run_btn or auto_start:
             try:
                 result = run_live_debate(creative_id)
                 if result:
