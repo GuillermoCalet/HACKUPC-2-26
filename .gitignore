@@ -1,6 +1,5 @@
 .env
 evidence.db
-pipeline/creative_features.parquet
 __pycache__/
 *.py[cod]
 .venv/
