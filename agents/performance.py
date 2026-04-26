@@ -11,6 +11,7 @@ from agents._agent_helpers import (
     load_prompt, parse_opinion, parse_messages,
     context_str, challenges_str, opinions_str,
 )
+from agents.heuristics import fallback_messages, fallback_opinion
 
 CARD = AgentCard(
     name="performance_analyst",
@@ -20,7 +21,11 @@ CARD = AgentCard(
     vote_weight=1.0,
 )
 
-async def opinion_fn(task: Task, prior_messages: list[Message]) -> Opinion:
+async def opinion_fn(
+    task: Task,
+    prior_messages: list[Message],
+    previous_opinion: Opinion | None = None,
+) -> Opinion:
     round_num = 3 if prior_messages else 1
     prompt = load_prompt("performance")
     user_msg = (
@@ -28,8 +33,12 @@ async def opinion_fn(task: Task, prior_messages: list[Message]) -> Opinion:
         .replace("{context}", context_str(task.context))
         .replace("{challenges}", challenges_str(prior_messages))
     )
-    raw = generate_text(user_msg, max_tokens=1024)
-    return parse_opinion(raw, CARD.name, round_num)
+    try:
+        raw = generate_text(user_msg, max_tokens=1024)
+        return parse_opinion(raw, CARD.name, round_num)
+    except Exception as exc:
+        print(f"[{CARD.name}] LLM opinion failed, using metric fallback: {exc}")
+        return fallback_opinion(CARD.name, task, prior_messages, previous_opinion)
 
 
 async def respond_fn(task: Task, opinions: list[Opinion]) -> list[Message]:
@@ -40,8 +49,12 @@ async def respond_fn(task: Task, opinions: list[Opinion]) -> list[Message]:
         .replace("{context}", context_str(task.context))
         .replace("{opinions}", opinions_str(opinions))
     )
-    raw = generate_text(user_msg, max_tokens=1024)
-    return parse_messages(raw, CARD.name)
+    try:
+        raw = generate_text(user_msg, max_tokens=1024)
+        return parse_messages(raw, CARD.name)
+    except Exception as exc:
+        print(f"[{CARD.name}] LLM respond failed, using metric fallback: {exc}")
+        return fallback_messages(CARD.name, task, opinions)
 
 
 app = make_agent(CARD, opinion_fn, respond_fn)

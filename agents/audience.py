@@ -14,6 +14,7 @@ from agents._agent_helpers import (
     load_prompt, parse_opinion, parse_messages,
     context_str, challenges_str, opinions_str,
 )
+from agents.heuristics import fallback_messages, fallback_opinion
 
 CARD = AgentCard(
     name="audience_simulator",
@@ -41,7 +42,11 @@ def _load_image_b64(image_path: str) -> str | None:
         return None
 
 
-async def opinion_fn(task: Task, prior_messages: list[Message]) -> Opinion:
+async def opinion_fn(
+    task: Task,
+    prior_messages: list[Message],
+    previous_opinion: Opinion | None = None,
+) -> Opinion:
     round_num = 3 if prior_messages else 1
     context = task.context
     persona = _build_persona(context)
@@ -57,15 +62,19 @@ async def opinion_fn(task: Task, prior_messages: list[Message]) -> Opinion:
         .replace("{challenges}", challenges_str(prior_messages))
     )
 
-    image_b64 = _load_image_b64(task.image_path)
-    if image_b64:
-        raw = generate_vision(user_text, image_b64, max_tokens=1024)
-    else:
-        raw = generate_text(
-            user_text + "\n(Image unavailable — base analysis on metadata only)",
-            max_tokens=1024,
-        )
-    return parse_opinion(raw, CARD.name, round_num)
+    try:
+        image_b64 = _load_image_b64(task.image_path)
+        if image_b64:
+            raw = generate_vision(user_text, image_b64, max_tokens=1024)
+        else:
+            raw = generate_text(
+                user_text + "\n(Image unavailable — base analysis on metadata only)",
+                max_tokens=1024,
+            )
+        return parse_opinion(raw, CARD.name, round_num)
+    except Exception as exc:
+        print(f"[{CARD.name}] LLM opinion failed, using audience fallback: {exc}")
+        return fallback_opinion(CARD.name, task, prior_messages, previous_opinion)
 
 
 async def respond_fn(task: Task, opinions: list[Opinion]) -> list[Message]:
@@ -76,8 +85,12 @@ async def respond_fn(task: Task, opinions: list[Opinion]) -> list[Message]:
         .replace("{context}", context_str(task.context))
         .replace("{opinions}", opinions_str(opinions))
     )
-    raw = generate_text(user_msg, max_tokens=1024)
-    return parse_messages(raw, CARD.name)
+    try:
+        raw = generate_text(user_msg, max_tokens=1024)
+        return parse_messages(raw, CARD.name)
+    except Exception as exc:
+        print(f"[{CARD.name}] LLM respond failed, using audience fallback: {exc}")
+        return fallback_messages(CARD.name, task, opinions)
 
 
 app = make_agent(CARD, opinion_fn, respond_fn)

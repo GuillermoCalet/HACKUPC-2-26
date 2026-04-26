@@ -5,7 +5,16 @@
 echo "🚀 Starting Creative Boardroom agents..."
 echo ""
 
-source venv/bin/activate
+if [ -d ".venv" ]; then
+    source .venv/bin/activate
+elif [ -d "venv" ]; then
+    source venv/bin/activate
+else
+    echo "Creating .venv..."
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install -r requirements.txt
+fi
 
 # Kill any existing agents
 echo "🛑 Cleaning up old processes..."

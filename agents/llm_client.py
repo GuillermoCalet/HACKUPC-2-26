@@ -14,6 +14,7 @@ try:
     from dotenv import load_dotenv
 
     load_dotenv()
+    load_dotenv(".emv", override=False)
 except Exception:
     pass
 

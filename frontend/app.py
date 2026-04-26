@@ -384,15 +384,16 @@ div[data-testid="stToolbar"] {
 }
 
 .block-container {
-  padding: 1.25rem 1.35rem 2.4rem;
+  width: 100%;
+  max-width: none;
+  padding: clamp(0.65rem, 1.2vw, 1.25rem) clamp(0.75rem, 2vw, 2.2rem) 2.4rem;
   padding-bottom: 3rem;
-  max-width: 1840px;
 }
 
 .hero-shell {
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 28px;
-  padding: 28px 30px;
+  padding: clamp(22px, 2vw, 30px);
   background:
     linear-gradient(135deg, rgba(15, 23, 42, 0.78), rgba(2, 6, 23, 0.40)),
     linear-gradient(90deg, rgba(77, 216, 255, 0.08), rgba(46, 242, 160, 0.05));
@@ -493,34 +494,51 @@ div[data-testid="stToolbar"] {
 }
 
 .boardroom-creative-card {
-  max-width: 360px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto 18px;
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 22px;
-  padding: 14px;
+  padding: 16px;
   background: rgba(15, 23, 42, 0.72);
   box-shadow: 0 20px 60px rgba(0,0,0,0.24);
 }
 
-.boardroom-creative-img {
+.boardroom-asset-frame {
   width: 100%;
-  min-height: 220px;
-  max-height: 360px;
-  object-fit: contain;
+  height: clamp(330px, 28vw, 500px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 16px;
   background: rgba(2, 6, 23, 0.68);
   border: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+.boardroom-creative-img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.boardroom-asset-frame.creative-placeholder {
+  color: rgba(229,237,248,0.72);
+  font-weight: 700;
 }
 
 .compact-metric-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-top: 12px;
+  gap: 10px;
+  margin-top: 14px;
 }
 
 .compact-metric {
   border-radius: 14px;
-  padding: 10px;
+  padding: 12px;
   background: rgba(2, 6, 23, 0.44);
   border: 1px solid rgba(148, 163, 184, 0.12);
 }
@@ -530,18 +548,18 @@ div[data-testid="stToolbar"] {
 }
 
 .compact-verdict {
-  margin-top: 14px;
-  border-radius: 16px;
-  padding: 16px;
+  margin-top: 18px;
+  border-radius: 18px;
+  padding: clamp(18px, 1.4vw, 24px);
   background: rgba(2, 6, 23, 0.52);
   border: 1px solid rgba(148, 163, 184, 0.16);
 }
 
 .compact-verdict-reasons {
-  margin-top: 12px;
+  margin-top: 14px;
   color: #cbd5e1;
-  font-size: 0.9rem;
-  line-height: 1.42;
+  font-size: 0.98rem;
+  line-height: 1.48;
 }
 
 .compact-verdict-reasons ul {
@@ -558,8 +576,8 @@ div[data-testid="stToolbar"] {
   align-items: center;
   gap: 8px;
   border-radius: 999px;
-  padding: 10px 15px;
-  font-size: clamp(1.1rem, 1.8vw, 1.45rem);
+  padding: 13px 18px;
+  font-size: clamp(1.65rem, 2.6vw, 3.1rem);
   font-weight: 800;
   letter-spacing: 0.08em;
   border: 1px solid currentColor;
@@ -1153,6 +1171,31 @@ div[data-testid="stRadio"] [role="radio"] {
   background: rgba(15, 23, 42, 0.58);
 }
 
+.st-key-main_nav {
+  margin: 18px 0 20px;
+}
+
+.st-key-main_nav .stButton > button {
+  min-height: 76px;
+  border-radius: 20px;
+  justify-content: flex-start;
+  padding: 0.9rem 1.2rem;
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.78), rgba(2, 6, 23, 0.58));
+  color: #dbeafe;
+  font-size: clamp(0.98rem, 1vw, 1.12rem);
+  text-align: left;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 14px 36px rgba(0,0,0,0.20);
+}
+
+.st-key-main_nav .stButton > button[kind="primary"] {
+  border-color: rgba(77, 216, 255, 0.72);
+  background:
+    linear-gradient(135deg, rgba(77,216,255,0.26), rgba(46,242,160,0.16)),
+    rgba(15, 23, 42, 0.82);
+  box-shadow: 0 0 0 1px rgba(77,216,255,0.12), 0 18px 46px rgba(77,216,255,0.10);
+}
+
 button[kind="primary"], .stButton > button {
   border-radius: 999px;
   border: 1px solid rgba(77, 216, 255, 0.32);
@@ -1162,8 +1205,12 @@ button[kind="primary"], .stButton > button {
 }
 
 @media (max-width: 900px) {
+  .block-container { padding-left: 0.75rem; padding-right: 0.75rem; }
   .hero-shell { padding: 22px; }
   .metric-value { font-size: 1.6rem; }
+  .st-key-main_nav .stButton > button { min-height: 62px; justify-content: center; text-align: center; }
+  .boardroom-creative-card { max-width: 100%; }
+  .boardroom-asset-frame { height: 340px; }
   .loading-boardroom { min-height: 570px; }
   .loading-title {
     height: 132px;
@@ -1444,6 +1491,14 @@ def select_creative(creatives: list[dict[str, Any]], creative_id: str | None = N
             if str(creative.get("creative_id")) == str(target):
                 return creative
     return creatives[0]
+
+
+def set_active_screen(screen: str) -> None:
+    st.session_state["active_screen"] = screen
+
+
+def toggle_session_bool(key: str) -> None:
+    st.session_state[key] = not bool(st.session_state.get(key, False))
 
 
 def metric_card(label: str, value: str, context: str, accent: str) -> None:
@@ -2123,9 +2178,13 @@ def render_boardroom_result(result: dict[str, Any]) -> None:
     show_details = bool(st.session_state.get(details_key, False))
     button_label = "Hide details" if show_details else "View more details"
     st.markdown("#### Debate Details")
-    if st.button(button_label, key=f"{details_key}_button", use_container_width=True):
-        show_details = not show_details
-        st.session_state[details_key] = show_details
+    st.button(
+        button_label,
+        key=f"{details_key}_button",
+        use_container_width=True,
+        on_click=toggle_session_bool,
+        args=(details_key,),
+    )
 
     if show_details:
         render_transcript(result.get("transcript", []))
@@ -2363,9 +2422,9 @@ def render_compact_creative_panel(creative: dict[str, Any], result: dict[str, An
     image_uri = image_to_data_uri(creative.get("image_path"))
     title = f"Creative {html.escape(creative_id)}"
     image_html = (
-        f'<img class="boardroom-creative-img" src="{image_uri}" alt="{title}">'
+        f'<div class="boardroom-asset-frame"><img class="boardroom-creative-img" src="{image_uri}" alt="{title}"></div>'
         if image_uri
-        else f'<div class="boardroom-creative-img creative-placeholder">{title}</div>'
+        else f'<div class="boardroom-asset-frame creative-placeholder">{title}</div>'
     )
 
     verdict_html = ""
@@ -2844,7 +2903,7 @@ def render_boardroom(creatives: list[dict[str, Any]]) -> None:
     st.markdown("### Creative Boardroom")
     st.caption("Five agent personas analyze the selected creative, challenge each other, and produce one recommendation.")
 
-    left, right = st.columns([0.46, 1.54], gap="large")
+    left, right = st.columns([0.58, 1.42], gap="large")
     with left:
         creative_panel_slot = st.empty()
         with creative_panel_slot.container():
@@ -2904,15 +2963,19 @@ def render_navigation() -> str:
     if "active_screen" not in st.session_state:
         st.session_state["active_screen"] = SCREENS[0]
     active_screen = st.session_state["active_screen"]
-    selected = st.radio(
-        "Navigation",
-        SCREENS,
-        index=SCREENS.index(active_screen),
-        horizontal=True,
-        label_visibility="collapsed",
-    )
-    st.session_state["active_screen"] = selected
-    return selected
+    with st.container(key="main_nav"):
+        cols = st.columns(3, gap="medium")
+        for col, screen in zip(cols, SCREENS):
+            with col:
+                st.button(
+                    screen,
+                    key=f"nav_{re.sub(r'[^a-z0-9]+', '_', screen.lower()).strip('_')}",
+                    type="primary" if screen == active_screen else "secondary",
+                    use_container_width=True,
+                    on_click=set_active_screen,
+                    args=(screen,),
+                )
+    return st.session_state["active_screen"]
 
 
 def main() -> None:

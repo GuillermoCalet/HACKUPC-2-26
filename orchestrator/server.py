@@ -23,7 +23,8 @@ from orchestrator import debate, evidence_store
 from orchestrator.a2a import DebateRequest
 
 
-PARQUET_PATH = Path(os.getenv("PARQUET_PATH", "pipeline/creative_features.parquet"))
+BASE_DIR = Path(__file__).resolve().parent.parent
+PARQUET_PATH = Path(os.getenv("PARQUET_PATH", str(BASE_DIR / "pipeline/creative_features.parquet")))
 CAMPAIGN_ID = os.getenv("CAMPAIGN_ID", "")
 
 app = FastAPI(title="Creative Boardroom Orchestrator")

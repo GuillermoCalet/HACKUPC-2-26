@@ -1,0 +1,447 @@
+{
+    "debate_id": "87ddb436-38d2-4c5a-ae3f-5dbd233984d9",
+    "creative_id": "demo_creative",
+    "campaign_id": "demo_campaign",
+    "transcript": [
+        {
+            "round": 0,
+            "type": "task",
+            "data": {
+                "task_id": "87ddb436-38d2-4c5a-ae3f-5dbd233984d9",
+                "creative_id": "demo_creative",
+                "campaign_id": "demo_campaign",
+                "context": {
+                    "creative_id": "demo_creative",
+                    "campaign_id": "demo_campaign",
+                    "image_path": null,
+                    "format": "static_image",
+                    "theme": "limited_time_offer",
+                    "language": "en",
+                    "impressions": 12000,
+                    "clicks": 480,
+                    "installs": 42,
+                    "conversions": 42,
+                    "spend": 850.0,
+                    "ctr": 0.04,
+                    "cvr": 0.0875,
+                    "ipm": 3.5,
+                    "cpi": 20.24,
+                    "roas": 0.65,
+                    "ctr_pct": 0.91,
+                    "ipm_pct": 0.82,
+                    "cvr_pct": 0.35,
+                    "spend_pct": 0.78,
+                    "ctr_slope_7d": -0.12,
+                    "active_days": 14,
+                    "creative_status": "demo_low_sample_high_ctr_fatigue_risk",
+                    "target_os": "iOS",
+                    "countries": "US, ES",
+                    "objective": "mobile_app_installs",
+                    "target_age_segment": "25-44"
+                },
+                "image_path": null
+            }
+        },
+        {
+            "round": 1,
+            "type": "opinions",
+            "data": [
+                {
+                    "agent": "performance_analyst",
+                    "round": 1,
+                    "verdict": "SCALE",
+                    "confidence": 0.82,
+                    "claims": [
+                        "CTR and IPM are above campaign peers, suggesting the creative is earning attention.",
+                        "The performance read favors increasing spend unless risk or fatigue evidence contradicts it."
+                    ],
+                    "evidence": [
+                        {
+                            "type": "metric",
+                            "key": "ctr_pct",
+                            "value": 0.91,
+                            "source": "creative_features"
+                        },
+                        {
+                            "type": "metric",
+                            "key": "ipm_pct",
+                            "value": 0.82,
+                            "source": "creative_features"
+                        }
+                    ],
+                    "changed_from": null
+                },
+                {
+                    "agent": "fatigue_detective",
+                    "round": 1,
+                    "verdict": "PAUSE",
+                    "confidence": 0.86,
+                    "claims": [
+                        "Recent CTR slope is sharply negative, which points to emerging fatigue.",
+                        "Scaling while decay is active risks buying lower quality impressions."
+                    ],
+                    "evidence": [
+                        {
+                            "type": "statistical",
+                            "key": "ctr_slope_7d",
+                            "value": -0.12,
+                            "source": "creative_features"
+                        },
+                        {
+                            "type": "metric",
+                            "key": "active_days",
+                            "value": 14.0,
+                            "source": "creative_features"
+                        }
+                    ],
+                    "changed_from": null
+                },
+                {
+                    "agent": "risk_officer",
+                    "round": 1,
+                    "verdict": "PIVOT",
+                    "confidence": 0.78,
+                    "claims": [
+                        "Install volume is below the minimum threshold for a confident scale decision.",
+                        "Spend is meaningful enough that the next move should reduce downside risk."
+                    ],
+                    "evidence": [
+                        {
+                            "type": "metric",
+                            "key": "installs",
+                            "value": 42.0,
+                            "source": "creative_features"
+                        },
+                        {
+                            "type": "metric",
+                            "key": "spend",
+                            "value": 850.0,
+                            "source": "creative_features"
+                        }
+                    ],
+                    "changed_from": null
+                },
+                {
+                    "agent": "visual_critic",
+                    "round": 1,
+                    "verdict": "TEST_NEXT",
+                    "confidence": 0.62,
+                    "claims": [
+                        "Metadata suggests the concept is legible, but no visual asset is required for this stub run.",
+                        "Creative quality should be verified against the actual image before a scale decision."
+                    ],
+                    "evidence": [
+                        {
+                            "type": "categorical",
+                            "key": "format",
+                            "value": "static_image",
+                            "source": "creative_features"
+                        },
+                        {
+                            "type": "system",
+                            "key": "stub_mode",
+                            "value": "metadata_only",
+                            "source": "stub_agent"
+                        }
+                    ],
+                    "changed_from": null
+                },
+                {
+                    "agent": "audience_simulator",
+                    "round": 1,
+                    "verdict": "PIVOT",
+                    "confidence": 0.68,
+                    "claims": [
+                        "The audience may notice the offer, but fatigue and risk signals make a new angle more attractive.",
+                        "A refreshed hook should be tested against the current creative."
+                    ],
+                    "evidence": [
+                        {
+                            "type": "categorical",
+                            "key": "target_os",
+                            "value": "iOS",
+                            "source": "creative_features"
+                        },
+                        {
+                            "type": "categorical",
+                            "key": "countries",
+                            "value": "US, ES",
+                            "source": "creative_features"
+                        }
+                    ],
+                    "changed_from": null
+                }
+            ]
+        },
+        {
+            "round": 2,
+            "type": "challenges",
+            "data": [
+                {
+                    "id": "396e6e1f-3cbb-484a-b2b6-b6dd7d4b5b4b",
+                    "from_agent": "fatigue_detective",
+                    "to_agent": "performance_analyst",
+                    "type": "challenge",
+                    "body": "Your SCALE vote underweights the negative recent CTR slope. Please revisit whether decay blocks scaling.",
+                    "timestamp": "2026-04-25T14:43:12.998364Z",
+                    "in_reply_to": null
+                },
+                {
+                    "id": "325ab3ee-e63e-4fbb-b21d-833ccd75124c",
+                    "from_agent": "risk_officer",
+                    "to_agent": "performance_analyst",
+                    "type": "evidence_request",
+                    "body": "Please justify SCALE despite installs being below the reliability threshold.",
+                    "timestamp": "2026-04-25T14:43:12.998475Z",
+                    "in_reply_to": null
+                },
+                {
+                    "id": "a67a9b41-5009-4183-840b-0f6577e81c3e",
+                    "from_agent": "visual_critic",
+                    "to_agent": "risk_officer",
+                    "type": "concur",
+                    "body": "I agree that the visual read is not strong enough to offset the statistical risk.",
+                    "timestamp": "2026-04-25T14:43:12.998657Z",
+                    "in_reply_to": null
+                },
+                {
+                    "id": "c728d63c-cbb3-45f4-80f9-03f94ebce2ce",
+                    "from_agent": "audience_simulator",
+                    "to_agent": "fatigue_detective",
+                    "type": "concur",
+                    "body": "Audience reaction is likely to weaken if the same hook is already decaying.",
+                    "timestamp": "2026-04-25T14:43:12.998716Z",
+                    "in_reply_to": null
+                }
+            ]
+        },
+        {
+            "round": 3,
+            "type": "revisions",
+            "data": [
+                {
+                    "agent": "performance_analyst",
+                    "round": 3,
+                    "verdict": "TEST_NEXT",
+                    "confidence": 0.72,
+                    "claims": [
+                        "Top-of-funnel metrics are strong, but the low conversion sample and fatigue challenge make immediate scale premature.",
+                        "Recommendation revised after cross-examination: validate one more controlled budget step."
+                    ],
+                    "evidence": [
+                        {
+                            "type": "metric",
+                            "key": "ctr_pct",
+                            "value": 0.91,
+                            "source": "creative_features"
+                        },
+                        {
+                            "type": "metric",
+                            "key": "installs",
+                            "value": 42.0,
+                            "source": "creative_features"
+                        }
+                    ],
+                    "changed_from": "SCALE"
+                }
+            ]
+        },
+        {
+            "round": 4,
+            "type": "consensus",
+            "data": {
+                "verdict": "TEST_NEXT",
+                "confidence": 0.3875,
+                "scores": {
+                    "SCALE": 0.0,
+                    "PAUSE": 0.86,
+                    "PIVOT": 0.964,
+                    "TEST_NEXT": 1.154
+                },
+                "low_consensus": false,
+                "applied_overrides": []
+            }
+        }
+    ],
+    "final_opinions": [
+        {
+            "agent": "performance_analyst",
+            "round": 3,
+            "verdict": "TEST_NEXT",
+            "confidence": 0.72,
+            "claims": [
+                "Top-of-funnel metrics are strong, but the low conversion sample and fatigue challenge make immediate scale premature.",
+                "Recommendation revised after cross-examination: validate one more controlled budget step."
+            ],
+            "evidence": [
+                {
+                    "type": "metric",
+                    "key": "ctr_pct",
+                    "value": 0.91,
+                    "source": "creative_features"
+                },
+                {
+                    "type": "metric",
+                    "key": "installs",
+                    "value": 42.0,
+                    "source": "creative_features"
+                }
+            ],
+            "changed_from": "SCALE"
+        },
+        {
+            "agent": "fatigue_detective",
+            "round": 1,
+            "verdict": "PAUSE",
+            "confidence": 0.86,
+            "claims": [
+                "Recent CTR slope is sharply negative, which points to emerging fatigue.",
+                "Scaling while decay is active risks buying lower quality impressions."
+            ],
+            "evidence": [
+                {
+                    "type": "statistical",
+                    "key": "ctr_slope_7d",
+                    "value": -0.12,
+                    "source": "creative_features"
+                },
+                {
+                    "type": "metric",
+                    "key": "active_days",
+                    "value": 14.0,
+                    "source": "creative_features"
+                }
+            ],
+            "changed_from": null
+        },
+        {
+            "agent": "risk_officer",
+            "round": 1,
+            "verdict": "PIVOT",
+            "confidence": 0.78,
+            "claims": [
+                "Install volume is below the minimum threshold for a confident scale decision.",
+                "Spend is meaningful enough that the next move should reduce downside risk."
+            ],
+            "evidence": [
+                {
+                    "type": "metric",
+                    "key": "installs",
+                    "value": 42.0,
+                    "source": "creative_features"
+                },
+                {
+                    "type": "metric",
+                    "key": "spend",
+                    "value": 850.0,
+                    "source": "creative_features"
+                }
+            ],
+            "changed_from": null
+        },
+        {
+            "agent": "visual_critic",
+            "round": 1,
+            "verdict": "TEST_NEXT",
+            "confidence": 0.62,
+            "claims": [
+                "Metadata suggests the concept is legible, but no visual asset is required for this stub run.",
+                "Creative quality should be verified against the actual image before a scale decision."
+            ],
+            "evidence": [
+                {
+                    "type": "categorical",
+                    "key": "format",
+                    "value": "static_image",
+                    "source": "creative_features"
+                },
+                {
+                    "type": "system",
+                    "key": "stub_mode",
+                    "value": "metadata_only",
+                    "source": "stub_agent"
+                }
+            ],
+            "changed_from": null
+        },
+        {
+            "agent": "audience_simulator",
+            "round": 1,
+            "verdict": "PIVOT",
+            "confidence": 0.68,
+            "claims": [
+                "The audience may notice the offer, but fatigue and risk signals make a new angle more attractive.",
+                "A refreshed hook should be tested against the current creative."
+            ],
+            "evidence": [
+                {
+                    "type": "categorical",
+                    "key": "target_os",
+                    "value": "iOS",
+                    "source": "creative_features"
+                },
+                {
+                    "type": "categorical",
+                    "key": "countries",
+                    "value": "US, ES",
+                    "source": "creative_features"
+                }
+            ],
+            "changed_from": null
+        }
+    ],
+    "consensus": {
+        "verdict": "TEST_NEXT",
+        "confidence": 0.3875,
+        "scores": {
+            "SCALE": 0.0,
+            "PAUSE": 0.86,
+            "PIVOT": 0.964,
+            "TEST_NEXT": 1.154
+        },
+        "low_consensus": false,
+        "applied_overrides": []
+    },
+    "synthesis": {
+        "verdict": "TEST_NEXT",
+        "headline": "Weighted agent consensus is TEST_NEXT with 39% consensus confidence.",
+        "evidence_bullets": [
+            "Top-of-funnel metrics are strong, but the low conversion sample and fatigue challenge make immediate scale premature.",
+            "Metadata suggests the concept is legible, but no visual asset is required for this stub run."
+        ],
+        "dissent": "fatigue_detective: PAUSE, risk_officer: PIVOT, audience_simulator: PIVOT",
+        "next_action": "Run the next controlled test before scaling spend.",
+        "scores": {
+            "SCALE": 0.0,
+            "PAUSE": 0.86,
+            "PIVOT": 0.964,
+            "TEST_NEXT": 1.154
+        },
+        "low_consensus": false
+    },
+    "hero_moment": {
+        "agent": "performance_analyst",
+        "changed_from": "SCALE",
+        "changed_to": "TEST_NEXT",
+        "confidence": 0.72,
+        "reason": "Top-of-funnel metrics are strong, but the low conversion sample and fatigue challenge make immediate scale premature."
+    },
+    "weighted_verdict": "TEST_NEXT",
+    "verdict_card": {
+        "verdict": "TEST_NEXT",
+        "headline": "Weighted agent consensus is TEST_NEXT with 39% consensus confidence.",
+        "evidence_bullets": [
+            "Top-of-funnel metrics are strong, but the low conversion sample and fatigue challenge make immediate scale premature.",
+            "Metadata suggests the concept is legible, but no visual asset is required for this stub run."
+        ],
+        "dissent": "fatigue_detective: PAUSE, risk_officer: PIVOT, audience_simulator: PIVOT",
+        "next_action": "Run the next controlled test before scaling spend.",
+        "scores": {
+            "SCALE": 0.0,
+            "PAUSE": 0.86,
+            "PIVOT": 0.964,
+            "TEST_NEXT": 1.154
+        },
+        "low_consensus": false
+    }
+}
