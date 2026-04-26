@@ -375,8 +375,7 @@ header[data-testid="stHeader"] {
 .block-container {
   width: 100%;
   max-width: none;
-  padding: clamp(0.65rem, 1.2vw, 1.25rem) clamp(0.75rem, 2vw, 2.2rem) 2.4rem;
-  padding-bottom: 3rem;
+  padding: 1.25rem 1.5rem 1.5rem 1.5rem;
 }
 
 .hero-shell {
@@ -3394,9 +3393,7 @@ def main() -> None:
         st.session_state["selected_creative_id"] = str(creatives[0].get("creative_id"))
 
     render_header(using_demo_data)
-    st.markdown("")
     active_screen = render_navigation()
-    st.markdown("")
 
     if active_screen == "Campaign Overview":
         render_campaign_overview(creatives, metrics)
