@@ -1716,12 +1716,12 @@ def render_asset(creative: dict[str, Any]) -> None:
 
 
 def render_creative_analytics(creatives: list[dict[str, Any]], metrics: dict[str, float]) -> None:
-    selected = selected_creative_selector(creatives)
     st.markdown("### Single Creative Analytics")
     st.caption("A deeper read designed to explain whether this ad is healthy, tiring, or risky to scale.")
 
     left, center, right = st.columns([0.9, 1.3, 0.9], gap="large")
     with left:
+        selected = selected_creative_selector(creatives)
         render_asset(selected)
         tags = [
             selected.get("emotional_tone"),
@@ -2929,16 +2929,17 @@ def run_live_debate(creative_id: str) -> dict[str, Any] | None:
 
 
 def render_boardroom(creatives: list[dict[str, Any]]) -> None:
-    selected = selected_creative_selector(creatives)
-    creative_id = str(selected.get("creative_id"))
-    result_key = f"result_{creative_id}"
-    result = st.session_state.get(result_key)
-    ran_live_this_turn = False
     st.markdown("### Creative Boardroom")
     st.caption("Five agent personas analyze the selected creative, challenge each other, and produce one recommendation.")
 
     left, right = st.columns([0.58, 1.42], gap="large")
     with left:
+        selected = selected_creative_selector(creatives)
+        creative_id = str(selected.get("creative_id"))
+        result_key = f"result_{creative_id}"
+        result = st.session_state.get(result_key)
+        ran_live_this_turn = False
+        
         creative_panel_slot = st.empty()
         with creative_panel_slot.container():
             render_compact_creative_panel(selected, result)
