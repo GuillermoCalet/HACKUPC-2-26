@@ -1188,15 +1188,14 @@ div[data-testid="stRadio"] [role="radio"] {
 .st-key-main_nav .stButton > button {
   min-height: 72px;
   border-radius: 18px;
-  justify-content: flex-start;
+  justify-content: center;
   padding: 0.8rem 1.2rem;
   border: 1px solid rgba(148, 163, 184, 0.22);
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.80), rgba(2, 6, 23, 0.60));
   color: #94a3b8;
-  font-size: 0.96rem;
-  font-weight: 700;
-  text-align: left;
-  white-space: pre-line;
+  font-size: 1.15rem;
+  font-weight: 800;
+  text-align: center;
   line-height: 1.3;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 30px rgba(0,0,0,0.18);
   transition: all 0.2s ease;
@@ -3361,13 +3360,6 @@ def render_boardroom(creatives: list[dict[str, Any]]) -> None:
             st.info("No verdict yet. Start the boardroom to generate the live agent debate and final recommendation.")
 
 
-NAV_META = {
-    "Campaign Overview":  ("01", "All 6 creatives at a glance"),
-    "Creative Analytics": ("02", "CTR decay & fatigue deep-dive"),
-    "Creative Boardroom": ("03", "5-agent AI debate → verdict"),
-}
-
-
 def render_navigation() -> str:
     if "active_screen" not in st.session_state:
         st.session_state["active_screen"] = SCREENS[0]
@@ -3375,11 +3367,9 @@ def render_navigation() -> str:
     with st.container(key="main_nav"):
         cols = st.columns(3, gap="medium")
         for col, screen in zip(cols, SCREENS):
-            num, desc = NAV_META.get(screen, ("—", ""))
-            label = f"{num}  {screen}\n{desc}"
             with col:
                 st.button(
-                    label,
+                    screen,
                     key=f"nav_{re.sub(r'[^a-z0-9]+', '_', screen.lower()).strip('_')}",
                     type="primary" if screen == active_screen else "secondary",
                     use_container_width=True,
