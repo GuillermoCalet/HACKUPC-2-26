@@ -1186,24 +1186,37 @@ div[data-testid="stRadio"] [role="radio"] {
 }
 
 .st-key-main_nav .stButton > button {
-  min-height: 76px;
-  border-radius: 20px;
+  min-height: 72px;
+  border-radius: 18px;
   justify-content: flex-start;
-  padding: 0.9rem 1.2rem;
-  border: 1px solid rgba(148, 163, 184, 0.26);
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.78), rgba(2, 6, 23, 0.58));
-  color: #dbeafe;
-  font-size: clamp(0.98rem, 1vw, 1.12rem);
+  padding: 0.8rem 1.2rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.80), rgba(2, 6, 23, 0.60));
+  color: #94a3b8;
+  font-size: 0.96rem;
+  font-weight: 700;
   text-align: left;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 14px 36px rgba(0,0,0,0.20);
+  white-space: pre-line;
+  line-height: 1.3;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 30px rgba(0,0,0,0.18);
+  transition: all 0.2s ease;
+}
+
+.st-key-main_nav .stButton > button:hover {
+  border-color: rgba(77, 216, 255, 0.36);
+  color: #dbeafe;
 }
 
 .st-key-main_nav .stButton > button[kind="primary"] {
-  border-color: rgba(77, 216, 255, 0.72);
+  border-color: rgba(77, 216, 255, 0.65);
   background:
-    linear-gradient(135deg, rgba(77,216,255,0.26), rgba(46,242,160,0.16)),
-    rgba(15, 23, 42, 0.82);
-  box-shadow: 0 0 0 1px rgba(77,216,255,0.12), 0 18px 46px rgba(77,216,255,0.10);
+    linear-gradient(135deg, rgba(77,216,255,0.20), rgba(46,242,160,0.12)),
+    rgba(15, 23, 42, 0.88);
+  color: #e5edf8;
+  box-shadow:
+    0 0 0 1px rgba(77,216,255,0.15),
+    0 0 32px rgba(77,216,255,0.12),
+    0 14px 40px rgba(0,0,0,0.24);
 }
 
 button[kind="primary"], .stButton > button {
@@ -3293,16 +3306,24 @@ def render_boardroom(creatives: list[dict[str, Any]]) -> None:
     with right:
         st.markdown(
             """
-<div class="control-panel">
-  <div class="control-title">Boardroom Analysis</div>
-  <div class="control-copy">Run the agent debate when you are ready. The verdict appears only after the analysis completes.</div>
+<div style="border:1px solid rgba(77,216,255,0.22);border-radius:20px;padding:18px 20px;
+  background:linear-gradient(135deg,rgba(77,216,255,0.06),rgba(46,242,160,0.04)),rgba(15,23,42,0.72);
+  margin-bottom:14px;box-shadow:0 0 32px rgba(77,216,255,0.06);">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+    <div style="width:8px;height:8px;border-radius:50%;background:#2ef2a0;box-shadow:0 0 10px #2ef2a0;animation:nodePulse 1.4s ease-in-out infinite;"></div>
+    <div style="color:#e5edf8;font-size:1.05rem;font-weight:800;">Agent Boardroom</div>
+  </div>
+  <div style="color:#9fb1c8;font-size:0.88rem;line-height:1.45;">
+    5 AI specialists debate the selected creative across 4 rounds — independent opinions,
+    cross-examination, revisions, and weighted consensus.
+  </div>
 </div>
             """,
             unsafe_allow_html=True,
         )
         cols = st.columns(2)
         with cols[0]:
-            run_btn = st.button("Convene the Boardroom", type="primary", use_container_width=True)
+            run_btn = st.button("▶  Convene the Boardroom", type="primary", use_container_width=True)
         with cols[1]:
             load_cached_btn = st.button("Load Cached Result", use_container_width=True)
 
@@ -3340,6 +3361,13 @@ def render_boardroom(creatives: list[dict[str, Any]]) -> None:
             st.info("No verdict yet. Start the boardroom to generate the live agent debate and final recommendation.")
 
 
+NAV_META = {
+    "Campaign Overview":  ("01", "All 6 creatives at a glance"),
+    "Creative Analytics": ("02", "CTR decay & fatigue deep-dive"),
+    "Creative Boardroom": ("03", "5-agent AI debate → verdict"),
+}
+
+
 def render_navigation() -> str:
     if "active_screen" not in st.session_state:
         st.session_state["active_screen"] = SCREENS[0]
@@ -3347,9 +3375,11 @@ def render_navigation() -> str:
     with st.container(key="main_nav"):
         cols = st.columns(3, gap="medium")
         for col, screen in zip(cols, SCREENS):
+            num, desc = NAV_META.get(screen, ("—", ""))
+            label = f"{num}  {screen}\n{desc}"
             with col:
                 st.button(
-                    screen,
+                    label,
                     key=f"nav_{re.sub(r'[^a-z0-9]+', '_', screen.lower()).strip('_')}",
                     type="primary" if screen == active_screen else "secondary",
                     use_container_width=True,
