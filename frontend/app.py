@@ -389,8 +389,8 @@ header[data-testid="stHeader"] {
 
 .hero-shell {
   border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 28px;
-  padding: clamp(22px, 2vw, 30px);
+  border-radius: 20px;
+  padding: clamp(14px, 1.5vw, 20px);
   background:
     linear-gradient(135deg, rgba(15, 23, 42, 0.78), rgba(2, 6, 23, 0.40)),
     linear-gradient(90deg, rgba(77, 216, 255, 0.08), rgba(46, 242, 160, 0.05));
@@ -427,17 +427,17 @@ header[data-testid="stHeader"] {
 
 .glass-card {
   border: 1px solid var(--border);
-  border-radius: 22px;
-  padding: 20px;
+  border-radius: 16px;
+  padding: 12px;
   background: var(--panel);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 18px 50px rgba(0,0,0,0.28);
   backdrop-filter: blur(16px);
 }
 
 .metric-card {
-  min-height: 138px;
-  border-radius: 22px;
-  padding: 20px;
+  min-height: 100px;
+  border-radius: 16px;
+  padding: 12px;
   border: 1px solid rgba(148, 163, 184, 0.20);
   background:
     linear-gradient(180deg, rgba(30, 41, 59, 0.78), rgba(15, 23, 42, 0.68));
@@ -475,9 +475,9 @@ header[data-testid="stHeader"] {
 
 .creative-card {
   border: 1px solid rgba(148, 163, 184, 0.20);
-  border-radius: 24px;
-  padding: 14px;
-  margin-bottom: 18px;
+  border-radius: 16px;
+  padding: 10px;
+  margin-bottom: 10px;
   background:
     linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(2, 6, 23, 0.70));
   box-shadow: 0 20px 60px rgba(0,0,0,0.30);
@@ -512,10 +512,10 @@ header[data-testid="stHeader"] {
 .boardroom-creative-card {
   width: 100%;
   max-width: 500px;
-  margin: 0 auto 18px;
+  margin: 0 auto 10px;
   border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 22px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 10px;
   background: rgba(15, 23, 42, 0.72);
   box-shadow: 0 20px 60px rgba(0,0,0,0.24);
 }
@@ -1977,7 +1977,7 @@ def render_creative_analytics(creatives: list[dict[str, Any]], metrics: dict[str
     st.markdown('<div class="screen-title">Single Creative Analytics</div>', unsafe_allow_html=True)
     st.markdown('<div class="screen-caption">Deep-dive on fatigue trends, ROAS, and scale readiness for the selected ad.</div>', unsafe_allow_html=True)
 
-    left, center, right = st.columns([0.9, 1.3, 0.9], gap="large")
+    left, center, right = st.columns([0.65, 1.45, 1.0], gap="medium")
     with left:
         selected = selected_creative_selector(creatives)
         render_asset(selected)
@@ -2006,6 +2006,10 @@ def render_creative_analytics(creatives: list[dict[str, Any]], metrics: dict[str
             f'<div class="fatigue-info-panel">{fatigue_note}CTR has declined {abs(decay_pct * 100):.0f}% from launch — threshold is −50%.</div>',
             unsafe_allow_html=True,
         )
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Proceed to Creative Boardroom →", key="btn_to_boardroom", type="primary", use_container_width=True):
+            st.session_state["active_screen"] = "Creative Boardroom"
+            st.rerun()
 
     with right:
         st.markdown('<div class="analytics-section-head">Scale Readiness</div>', unsafe_allow_html=True)
@@ -2037,12 +2041,6 @@ def render_creative_analytics(creatives: list[dict[str, Any]], metrics: dict[str
             """,
             unsafe_allow_html=True,
         )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("Proceed to Creative Boardroom →", key="btn_to_boardroom", type="primary", use_container_width=True):
-        st.session_state["active_screen"] = "Creative Boardroom"
-        st.rerun()
-
 
 def render_evidence_items(evidence: list[dict[str, Any]]) -> None:
     if not evidence:
@@ -2851,8 +2849,7 @@ def render_loading_boardroom(
 <div class="loading-boardroom">
   <div class="loading-title">
     <strong>{html.escape(status_title)}</strong>
-    <span class="loading-creative">Creative {html.escape(creative_id)}</span>
-    {route_html}
+    <span class="loading-creative">Creative {html.escape(creative_id)}</span>{route_html}
     <span class="loading-copy">{html.escape(status_copy)}</span>
   </div>
   <div class="boardroom-stage">
@@ -3240,7 +3237,7 @@ def render_boardroom(creatives: list[dict[str, Any]]) -> None:
     st.markdown('<div class="screen-title">Creative Boardroom</div>', unsafe_allow_html=True)
     st.markdown('<div class="screen-caption">Five AI specialists debate the ad, challenge each other\'s claims, and converge on one actionable verdict.</div>', unsafe_allow_html=True)
 
-    left, right = st.columns([0.58, 1.42], gap="large")
+    left, right = st.columns([0.58, 1.42], gap="medium")
     with left:
         selected = selected_creative_selector(creatives)
         creative_id = str(selected.get("creative_id"))
@@ -3271,21 +3268,9 @@ def render_boardroom(creatives: list[dict[str, Any]]) -> None:
             unsafe_allow_html=True,
         )
         cols = st.columns(2)
-        with cols[0]:
-            run_btn = st.button("▶  Convene the Boardroom", type="primary", use_container_width=True)
-        with cols[1]:
-            load_cached_btn = st.button("Load Cached Result", use_container_width=True)
+        run_btn = st.button("▶  Convene the Boardroom", type="primary", use_container_width=True)
 
-        if load_cached_btn:
-            try:
-                response = requests.get(f"{ORCHESTRATOR}/debate/{creative_id}/result", timeout=8)
-                if response.status_code == 200:
-                    result = response.json()
-                    st.session_state[result_key] = result
-                else:
-                    st.warning("No cached result found for this creative.")
-            except Exception as exc:
-                st.error(f"Error loading cached result: {exc}")
+
 
         if run_btn:
             try:
@@ -3307,6 +3292,7 @@ def render_boardroom(creatives: list[dict[str, Any]]) -> None:
                 render_completed_workflow(creative_id, result)
             render_boardroom_result(result)
         else:
+            render_loading_boardroom(creative_id, {"round": "Pre-convene"}, completed=False)
             st.info("No verdict yet. Start the boardroom to generate the live agent debate and final recommendation.")
 
 
