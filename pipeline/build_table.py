@@ -206,9 +206,9 @@ def build(campaign_id: str) -> pd.DataFrame:
     for src, out in [("ctr", "ctr_pct"), ("ipm", "ipm_pct"), ("spend", "spend_pct"), ("cvr", "cvr_pct")]:
         df[out] = df[src].rank(pct=True)
 
-    # Absolute image paths
+    # Relative image paths — work on any machine and in Docker (WORKDIR /app)
     df["image_path"] = df["asset_file"].apply(
-        lambda p: str((DATA_DIR / p).resolve())
+        lambda p: str(DATA_DIR / p)
     )
 
     # --- Clean dirty 10%: fatigue_day nulls ---
