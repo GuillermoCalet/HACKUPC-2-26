@@ -62,7 +62,10 @@ def _fatigue_signal(context: dict[str, Any]) -> bool:
     return (
         "fatigue" in status
         or _metric(context, "ctr_decay_pct", default=0.0) <= -0.50
-        or _metric(context, "ctr_slope_7d", default=0.0) <= -0.05
+        # ctr_slope_7d is stored as a rate, so -0.001 means roughly -0.10
+        # percentage points/day. The previous -0.05 threshold made lifetime
+        # decay carry too much of the fatigue decision and hid useful winners.
+        or _metric(context, "ctr_slope_7d", default=0.0) <= -0.001
     )
 
 
@@ -74,6 +77,115 @@ def _low_sample(context: dict[str, Any]) -> bool:
 
 def _roas(context: dict[str, Any]) -> float:
     return _metric(context, "overall_roas", "roas", default=0.0)
+
+
+def _confirmed_fatigue(context: dict[str, Any]) -> bool:
+    status = _text(context, "creative_status", default="").lower()
+    fatigue_day = _metric(context, "fatigue_day", default=0.0)
+    return "fatigue" in status or fatigue_day > 0
+
+
+def _useful_performance_signal(context: dict[str, Any]) -> bool:
+    status = _text(context, "creative_status", default="").lower()
+    return (
+        "top_performer" in status
+        or _metric(context, "ctr_pct", default=0.5) >= 0.65
+        or _metric(context, "ipm_pct", default=0.5) >= 0.65
+        or _roas(context) >= 1.15
+    )
+
+
+def _pause_harm_is_clear(context: dict[str, Any]) -> bool:
+    spend_pct = _metric(context, "spend_pct", "spend_share_pct", default=0.5)
+    ctr_pct = _metric(context, "ctr_pct", default=0.5)
+    ipm_pct = _metric(context, "ipm_pct", default=0.5)
+    roas = _roas(context)
+    losing_at_scale = bool(roas) and roas < 0.80 and spend_pct >= 0.50
+    wasteful_with_fatigue = (
+        _confirmed_fatigue(context)
+        and spend_pct >= 0.75
+        and ctr_pct <= 0.25
+        and ipm_pct <= 0.25
+        and (not roas or roas < 1.10)
+    )
+    return losing_at_scale or wasteful_with_fatigue
+
+
+def _supports_visual_pause(opinion: Opinion) -> bool:
+    text = " ".join(opinion.claims).lower()
+    hard_blockers = (
+        "missing cta",
+        "no visible cta",
+        "invisible cta",
+        "illegible",
+        "unreadable",
+        "cannot read",
+        "visually incoherent",
+        "actively creating rejection",
+        "distrust",
+    )
+    return any(blocker in text for blocker in hard_blockers)
+
+
+def calibrate_opinion(
+    agent_name: str,
+    task: Task,
+    opinion: Opinion,
+    previous_opinion: Opinion | None = None,
+) -> Opinion:
+    """Apply agent-local decision calibration without changing the A2A flow.
+
+    These guardrails keep each agent inside its stated remit: PAUSE should mean
+    clear active harm, while uncertainty or a tired-but-useful concept should
+    become TEST_NEXT or PIVOT.
+    """
+
+    context = task.context
+    updates: dict[str, Any] = {}
+
+    if agent_name == "fatigue_detective" and opinion.verdict == "PAUSE":
+        if not _pause_harm_is_clear(context):
+            next_verdict: Verdict = "PIVOT" if _useful_performance_signal(context) else "TEST_NEXT"
+            updates = {
+                "verdict": next_verdict,
+                "confidence": min(opinion.confidence, 0.74),
+                "claims": [
+                    "Fatigue is a refresh signal, not a kill signal: this creative still has useful historical or peer-relative performance, so the safer recommendation is to change the execution instead of pausing the concept completely.",
+                    *opinion.claims[:2],
+                ],
+            }
+
+    elif agent_name == "risk_officer" and opinion.verdict == "PAUSE":
+        if not _pause_harm_is_clear(context):
+            next_verdict = "TEST_NEXT" if _low_sample(context) else "PIVOT"
+            updates = {
+                "verdict": next_verdict,
+                "confidence": min(opinion.confidence, 0.72),
+                "claims": [
+                    "Financial risk does not justify a full pause because this creative is not clearly losing money at scale; reduce risk with a controlled next test or refreshed execution instead.",
+                    *opinion.claims[:2],
+                ],
+            }
+
+    elif agent_name in {"visual_critic", "audience_simulator"} and opinion.verdict == "PAUSE":
+        if not _supports_visual_pause(opinion):
+            updates = {
+                "verdict": "PIVOT",
+                "confidence": min(opinion.confidence, 0.68),
+                "claims": [
+                    "The visual or audience concern points to a specific execution change, but it is not a hard reason to stop the concept entirely.",
+                    *opinion.claims[:2],
+                ],
+            }
+
+    if not updates:
+        return opinion
+
+    changed_from = opinion.changed_from
+    new_verdict = updates.get("verdict")
+    if previous_opinion and new_verdict and previous_opinion.verdict != new_verdict:
+        changed_from = previous_opinion.verdict
+    return opinion.model_copy(update={**updates, "changed_from": changed_from})
 
 
 def fallback_opinion(
@@ -90,16 +202,24 @@ def fallback_opinion(
     spend_pct = _metric(context, "spend_pct", "spend_share_pct", default=0.5)
     installs = _metric(context, "installs", "conversions", "total_conversions", default=0.0)
     fatigue = _fatigue_signal(context)
+    confirmed_fatigue = _confirmed_fatigue(context)
     low_sample = _low_sample(context)
     roas = _roas(context)
 
     if agent_name == "performance_analyst":
-        if ctr_pct >= 0.70 and ipm_pct >= 0.60 and not fatigue and not low_sample:
+        if ctr_pct >= 0.70 and ipm_pct >= 0.60 and not confirmed_fatigue and not low_sample:
             verdict: Verdict = "SCALE"
             confidence = 0.78
             claims = [
                 "CTR and IPM sit above campaign peers, so the creative is producing strong top-of-funnel signal.",
                 "There is enough delivery volume to consider increasing spend cautiously.",
+            ]
+        elif confirmed_fatigue and _useful_performance_signal(context):
+            verdict = "PIVOT"
+            confidence = 0.72
+            claims = [
+                "The creative has useful performance history, but confirmed fatigue means the current execution should be refreshed before more spend.",
+                "Keep the working hook and test a new opening or call-to-action treatment.",
             ]
         elif ctr_pct >= 0.70 or ipm_pct >= 0.65:
             verdict = "TEST_NEXT"
@@ -126,21 +246,33 @@ def fallback_opinion(
         ]
 
     elif agent_name == "fatigue_detective":
-        if fatigue and _metric(context, "active_days", default=0.0) >= 7:
-            verdict = "PAUSE"
-            confidence = 0.84
-            claims = [
-                "Recent trend or status indicates creative fatigue, so more spend risks buying declining attention.",
-                "The current asset should be paused or refreshed before any scale decision.",
-            ]
-        elif _metric(context, "active_days", default=0.0) < 7:
+        if _metric(context, "active_days", default=0.0) < 7:
             verdict = "TEST_NEXT"
             confidence = 0.62
             claims = ["The creative is too young to judge fatigue reliably."]
+        elif fatigue and _pause_harm_is_clear(context):
+            verdict = "PAUSE"
+            confidence = 0.82
+            claims = [
+                "Fatigue is paired with weak efficiency or poor return, so continuing this exact asset risks wasting spend.",
+                "Pause this execution until the creative is refreshed or budget is moved to healthier assets.",
+            ]
+        elif fatigue:
+            verdict = "PIVOT"
+            confidence = 0.74 if _useful_performance_signal(context) else 0.66
+            claims = [
+                "Recent attention has decayed, but the creative still has useful performance history, so refresh the execution instead of killing the concept.",
+                "The next version should keep the proven hook while changing the opening or call-to-action treatment.",
+            ]
         else:
-            verdict = "TEST_NEXT"
-            confidence = 0.60
-            claims = ["No severe fatigue signal appears, but monitoring should continue before scale."]
+            if _useful_performance_signal(context) and not low_sample:
+                verdict = "SCALE"
+                confidence = 0.70
+                claims = ["No confirmed fatigue block appears, and performance is strong enough to support careful scale."]
+            else:
+                verdict = "TEST_NEXT"
+                confidence = 0.60
+                claims = ["No severe fatigue signal appears, but monitoring should continue before scale."]
         evidence = [
             _evidence("statistical", "ctr_decay_pct", _metric(context, "ctr_decay_pct", default=0.0)),
             _evidence("statistical", "ctr_slope_7d", _metric(context, "ctr_slope_7d", default=0.0)),
@@ -154,6 +286,13 @@ def fallback_opinion(
             claims = [
                 "Install or impression volume is below a reliable scale threshold.",
                 "The decision should reduce statistical downside before increasing spend.",
+            ]
+        elif roas >= 1.20 and spend_pct < 0.70:
+            verdict = "SCALE"
+            confidence = 0.76
+            claims = [
+                "Return is comfortably above break-even while spend concentration is not excessive.",
+                "Financial risk does not block a controlled scale-up.",
             ]
         elif roas and roas < 0.80 and spend_pct >= 0.60:
             verdict = "PAUSE"
@@ -169,7 +308,9 @@ def fallback_opinion(
         else:
             verdict = "TEST_NEXT"
             confidence = 0.64
-            claims = ["Risk is acceptable for another measured test, but not decisive enough for broad scale."]
+            claims = [
+                "Return is not clearly bad and sample size is usable, but risk evidence is not strong enough to justify broad scale."
+            ]
         evidence = [
             _evidence("metric", "installs", installs),
             _evidence("metric", "spend_pct", spend_pct),
@@ -179,12 +320,19 @@ def fallback_opinion(
     elif agent_name == "visual_critic":
         format_ = _text(context, "format")
         theme = _text(context, "theme", "primary_theme")
-        if fatigue:
+        if confirmed_fatigue:
             verdict = "PIVOT"
             confidence = 0.66
             claims = [
                 "The creative likely needs a refreshed visual hook because attention is decaying.",
                 "Keep the core offer but change the presentation before another push.",
+            ]
+        elif ctr_pct >= 0.75 and ipm_pct >= 0.65:
+            verdict = "SCALE"
+            confidence = 0.66
+            claims = [
+                "The creative metadata and campaign response suggest the visual concept is clear enough to keep investing.",
+                "No confirmed visual or fatigue blocker appears in the structured data.",
             ]
         elif ctr_pct >= 0.65:
             verdict = "TEST_NEXT"
@@ -204,12 +352,19 @@ def fallback_opinion(
         ]
 
     else:  # audience_simulator
-        if ctr_pct >= 0.70 and cvr_pct >= 0.45 and not fatigue:
+        if ctr_pct >= 0.70 and cvr_pct >= 0.45 and not confirmed_fatigue:
             verdict = "SCALE"
             confidence = 0.66
             claims = [
                 "The creative appears relevant enough to attract users and still convert them.",
                 "Audience reaction is likely positive if spend is increased carefully.",
+            ]
+        elif confirmed_fatigue and _useful_performance_signal(context):
+            verdict = "PIVOT"
+            confidence = 0.66
+            claims = [
+                "The audience has responded before, but confirmed fatigue means the next version needs a fresher hook.",
+                "Do not kill the concept; change the execution and retest it.",
             ]
         elif ctr_pct >= 0.60 and cvr_pct < 0.40:
             verdict = "PIVOT"

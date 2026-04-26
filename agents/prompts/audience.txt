@@ -33,7 +33,7 @@ FORBIDDEN reaction patterns — never write these:
   These are conclusions without grounding. Name the trigger first, then explain.
 
 ALLOWED reaction examples:
-  "The large red 'INSTALL NOW' button at the bottom-center — for {target_age_segment} users in the {vertical} vertical on {target_os}, red urgency CTAs are associated with high-pressure tactics; this demographic often scrolls past them as a trust-preservation reflex, which would suppress click-through below what the creative's visual quality alone would achieve."
+  "The large 'INSTALL NOW' button at the bottom-center is visible but surrounded by three competing text blocks — for {target_age_segment} users on {target_os}, the next step may take too long to parse in a fast feed, which would suppress click-through below what a cleaner layout could achieve."
   "The product image showing a real person using the app occupies the top 60% of the canvas — {target_os} users in {countries} browsing the {vertical} category have high engagement with social-proof imagery; this specific execution would produce above-average thumb-stop rates because it mirrors the content style of organic posts in this feed."
   "No visible brand name or logo in the first 2 visual zones — this audience scrolling {vertical} content does not click on anonymous ads; without a recognizable trust signal in the top half, tap rate will be suppressed regardless of CTA quality."
 
@@ -48,9 +48,14 @@ Simulate scrolling past this ad as your persona. Evaluate:
 
 Decision rules (from the persona's perspective):
 - SCALE: Named thumb-stop element + named relevant signal + named trustworthy CTA = this audience will click
-- PAUSE: Named element is actively creating rejection, confusion, or distrust for this persona
+- PAUSE: Named element is actively creating rejection, confusion, or distrust for this persona. PAUSE requires a hard audience rejection signal, not just uncertainty.
 - PIVOT: The concept could reach this persona but a named specific element is blocking conversion
 - TEST_NEXT: The creative is neutral for this persona — no strong positive or negative signals from named elements
+
+Calibration:
+- If the audience reaction is uncertain or merely average, vote TEST_NEXT, not PAUSE.
+- If a specific element can be improved but the concept could still work, vote PIVOT and name the element to change.
+- Do not invent psychological causes for colors, buttons, characters, or layout. Every causal claim must be grounded in a visible element or exact metadata field.
 
 If challenged in Round 3, defend or revise by citing the specific grounded evidence the challenger questioned. Either show that the element you named does cause the reaction you described, or acknowledge the challenge and revise.
 

@@ -2486,7 +2486,18 @@ def render_boardroom_result(result: dict[str, Any]) -> None:
     if not reasons:
         reasons = [plain_language(VERDICT_MEANINGS.get(verdict, "The agents found a clear enough pattern to recommend this action."))]
     reason_html = "".join(f"<li>{html.escape(reason)}</li>" for reason in reasons)
-    hypotheses = creative_change_hypotheses(result)
+    next_action = str(verdict_card.get("next_action") or plain_next_action(verdict))
+    changes = verdict_card.get("creative_changes")
+    if isinstance(changes, list) and changes:
+        hypotheses = [
+            (
+                str(item.get("title", "Next step")) if isinstance(item, dict) else "Next step",
+                str(item.get("explanation", "")) if isinstance(item, dict) else str(item),
+            )
+            for item in changes
+        ]
+    else:
+        hypotheses = creative_change_hypotheses(result)
     hypothesis_html = "".join(
         f"""
 <div class="hypothesis-card">
@@ -2513,7 +2524,7 @@ def render_boardroom_result(result: dict[str, Any]) -> None:
 </div>
 <div class="decision-panel">
   <h4>Recommended Creative Changes</h4>
-  <div class="small-context">{html.escape(plain_next_action(verdict))}</div>
+  <div class="small-context">{html.escape(next_action)}</div>
   <div style="margin-top:12px;">{hypothesis_html}</div>
 </div>
         """,
@@ -2614,10 +2625,16 @@ def plain_language(text: Any) -> str:
     value = str(text or "").strip()
     replacements = [
         (r"\bCTR\b", "click interest"),
-        (r"\bIPM\b", "install pull"),
-        (r"\bROAS\b", "business return"),
-        (r"\bCVR\b", "conversion quality"),
+        (r"\bIPM\b", "installs per 1,000 views"),
+        (r"\bROAS\b", "return on spend"),
+        (r"\bCVR\b", "click-to-install quality"),
         (r"\bCTA\b", "call-to-action"),
+        (r"\bctr_pct\b", "click interest rank"),
+        (r"\bipm_pct\b", "install pull rank"),
+        (r"\bcvr_pct\b", "click-to-install rank"),
+        (r"\bctr_slope_7d\b", "recent click trend"),
+        (r"\bctr_decay_pct\b", "click interest drop"),
+        (r"\boverall_roas\b", "return on spend"),
         (r"below the\s+\d+(?:st|nd|rd|th)?\s+percentile", "weaker than most other ads in this campaign"),
         (r"above the\s+\d+(?:st|nd|rd|th)?\s+percentile", "stronger than most other ads in this campaign"),
         (r"top\s+\d+%", "among the stronger ads"),
@@ -2630,7 +2647,6 @@ def plain_language(text: Any) -> str:
     ]
     for pattern, replacement in replacements:
         value = re.sub(pattern, replacement, value, flags=re.IGNORECASE)
-    value = re.sub(r"\b\d+(?:\.\d+)?\s?%?\b", "", value)
     value = re.sub(r"\s+", " ", value)
     value = value.replace(" .", ".").replace(" ,", ",").strip(" -:")
     if not value:

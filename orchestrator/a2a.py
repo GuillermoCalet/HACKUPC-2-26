@@ -98,6 +98,8 @@ class ConsensusResult(BaseModel):
     scores: dict[str, float] = Field(default_factory=dict)
     low_consensus: bool
     applied_overrides: list[str] = Field(default_factory=list)
+    scores_before_overrides: dict[str, float] = Field(default_factory=dict)
+    scores_after_overrides: dict[str, float] = Field(default_factory=dict)
 
 
 class DebateResult(BaseModel):
@@ -109,6 +111,7 @@ class DebateResult(BaseModel):
     consensus: ConsensusResult
     synthesis: dict[str, Any] | None = None
     hero_moment: dict[str, Any] | None = None
+    debug: dict[str, Any] | None = None
 
     # Compatibility for the current Streamlit frontend while it migrates to
     # result["consensus"]["verdict"].

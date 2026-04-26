@@ -14,7 +14,7 @@ from agents._agent_helpers import (
     load_prompt, parse_opinion, parse_messages,
     context_str, challenges_str, opinions_str,
 )
-from agents.heuristics import fallback_messages, fallback_opinion
+from agents.heuristics import calibrate_opinion, fallback_messages, fallback_opinion
 
 CARD = AgentCard(
     name="audience_simulator",
@@ -71,7 +71,8 @@ async def opinion_fn(
                 user_text + "\n(Image unavailable — base analysis on metadata only)",
                 max_tokens=1024,
             )
-        return parse_opinion(raw, CARD.name, round_num)
+        opinion = parse_opinion(raw, CARD.name, round_num)
+        return calibrate_opinion(CARD.name, task, opinion, previous_opinion)
     except Exception as exc:
         print(f"[{CARD.name}] LLM opinion failed, using audience fallback: {exc}")
         return fallback_opinion(CARD.name, task, prior_messages, previous_opinion)

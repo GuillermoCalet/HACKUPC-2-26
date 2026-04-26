@@ -35,15 +35,19 @@ FORBIDDEN claim patterns — never write these:
   These are conclusions without evidence. Name the element first, then conclude.
 
 ALLOWED claim examples:
-  "The red CTA button at the bottom-third reads 'GET STARTED' in white 14px text — the red background against the dark surrounding area creates strong contrast, but red is associated with danger/stop in many cultural contexts and may trigger avoidance for risk-averse audiences in the finance vertical."
+  "The CTA button at the bottom-third reads 'GET STARTED' in white 14px text on a red background — it is legible and high contrast, so the issue is not visibility; only mention possible hesitation if the campaign vertical or audience metadata supports that interpretation."
   "The headline text in the upper-left ('Transform your portfolio') is white on a light-blue gradient background — insufficient contrast ratio, likely to be illegible at standard mobile viewing distances."
   "Three competing text blocks (headline, subheadline, CTA) plus a product image all occupy the top 60% of the canvas — visual hierarchy is unclear and the eye has no obvious path to the CTA."
 
 Decision rules:
 - SCALE: Immediately clear dominant subject + legible CTA with appropriate color + ≤3 competing visual elements
-- PAUSE: Missing or invisible CTA, OR illegible key text, OR visually incoherent composition that breaks user orientation
+- PAUSE: Missing or invisible CTA, OR illegible key text, OR visually incoherent composition that breaks user orientation. PAUSE requires a hard visual blocker.
 - PIVOT: Concept is visible but a specific element (name it) is undermining conversion potential
 - TEST_NEXT: Visual quality is adequate but a specific element (name it) is ambiguous — needs user response data to decide
+
+Calibration:
+- Do not vote PAUSE for an optimization issue such as "CTA could be stronger" or "layout is busy"; vote PIVOT and name what to change.
+- Do not claim a color causes rejection unless the image observation and campaign/audience metadata support that causal interpretation.
 
 If challenged in Round 3, address the specific visual element the challenger questioned by name. Either provide additional detail about why your original assessment holds, or revise with a clear reason.
 

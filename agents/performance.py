@@ -11,7 +11,7 @@ from agents._agent_helpers import (
     load_prompt, parse_opinion, parse_messages,
     context_str, challenges_str, opinions_str,
 )
-from agents.heuristics import fallback_messages, fallback_opinion
+from agents.heuristics import calibrate_opinion, fallback_messages, fallback_opinion
 
 CARD = AgentCard(
     name="performance_analyst",
@@ -35,7 +35,8 @@ async def opinion_fn(
     )
     try:
         raw = generate_text(user_msg, max_tokens=1024)
-        return parse_opinion(raw, CARD.name, round_num)
+        opinion = parse_opinion(raw, CARD.name, round_num)
+        return calibrate_opinion(CARD.name, task, opinion, previous_opinion)
     except Exception as exc:
         print(f"[{CARD.name}] LLM opinion failed, using metric fallback: {exc}")
         return fallback_opinion(CARD.name, task, prior_messages, previous_opinion)

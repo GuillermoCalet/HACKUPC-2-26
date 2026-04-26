@@ -5,6 +5,8 @@ You are NOT summarising the debate. You are EXPLAINING, in plain everyday langua
 == WEIGHTED VOTE RESULT ==
 The weighted vote (accounting for agent expertise weights) produced: {weighted_verdict}
 
+The "verdict" field in your JSON MUST be exactly "{weighted_verdict}". You may explain the verdict, but you must not silently change SCALE, PAUSE, PIVOT, or TEST_NEXT into another recommendation.
+
 == CREATIVE CONTEXT ==
 {context}
 
@@ -36,7 +38,7 @@ HOW TO TRANSLATE each metric into plain language:
   - Wide confidence interval  → "we haven't shown this ad to enough people yet to know if it's really working"
   - P85 percentile            → "better than 85 out of 100 other ads in this campaign"
   - creative_age_days > 30    → "this ad has been running for over a month"
-  - ctr_slope_7d < -0.10      → "over the past week, fewer and fewer people have been clicking on it each day"
+  - ctr_slope_7d < -0.001     → "over the past week, fewer and fewer people have been clicking on it each day"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RULE 2 — BE SPECIFIC, BUT IN PLAIN WORDS
@@ -44,10 +46,11 @@ RULE 2 — BE SPECIFIC, BUT IN PLAIN WORDS
 Being specific does NOT mean using technical vocabulary. It means naming the real thing.
 
 ALLOWED: name the specific button color, the exact number of days, the exact dollar amount, the specific visual element — but explain what it means in human terms.
+Only name a visual element if it appears in the visual or audience evidence. If the debate does not contain a visual observation, use metrics or metadata instead of inventing visual causes.
 
 GOOD examples of specific + plain:
   "People have been seeing this ad for 42 days. After that long, most users scroll past it without even registering it's there — like a poster you've walked past so many times you stop seeing it."
-  "The big red button at the bottom of the ad — red signals 'stop' or 'danger' to many people, especially when they're browsing a finance app. It may be making users hesitate instead of tap."
+  "The visual review found the bottom button is visible but competes with three nearby text blocks, so the next version should make the tap target visually simpler."
   "Right now this ad costs $13.60 to get one new user to install the app. Other ads in the same campaign are doing it for less — this one is one of the more expensive ways to grow."
   "We've only seen 312 people install the app from this ad. That's a bit like judging a restaurant after 3 reviews — not enough to be sure it's really working at scale."
 
@@ -92,7 +95,7 @@ Priority for what to highlight:
 
 GOOD bullets:
   "The ad has been running for 42 days. Most mobile ads lose their effectiveness after 3–4 weeks because people simply stop noticing them — like background music you stop hearing."
-  "The button that says 'Get Started' is red. For users browsing a finance app, red can feel like a warning sign rather than an invitation, which may be why many people see the ad but don't tap it."
+  "The visual review said the button is present but competing with nearby text. That matters because interested users may not notice the next step fast enough on a small screen."
   "Getting one new user from this ad currently costs around $13.60. Other ads in this campaign are doing it more cheaply — so even if we kept running it, the budget would work harder somewhere else."
 
 BAD bullets (forbidden):
@@ -106,7 +109,7 @@ RULE 5 — NEXT ACTION: ONE SPECIFIC, DOABLE INSTRUCTION
 Tell the marketer exactly what to do tomorrow. Use simple imperative language. Name the specific thing to change. Explain in one sentence why that change should help.
 
 GOOD next actions:
-  "Pause this ad and make a new version with a green or blue 'Get Started' button instead of red — warmer colors tend to feel more inviting on finance apps. Run both side by side for one week and keep whichever one gets more installs."
+  "Pause this exact ad and make a new version with a simpler first frame and clearer button area. Run both side by side for one week and keep whichever one gets more installs."
   "Keep running this ad — it's performing well. Set a reminder to check in 2 weeks, since most ads start losing effectiveness after about a month."
   "Reduce the budget on this ad by half and put the saved money into your better-performing creatives while you design a replacement. This one has been running long enough that a fresh approach is overdue."
   "Give this ad two more weeks before making any big decisions — it hasn't had enough time or views to show what it can really do."

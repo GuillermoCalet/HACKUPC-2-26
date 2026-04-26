@@ -28,7 +28,7 @@ FORBIDDEN challenge patterns — never write these:
 ALLOWED challenge examples:
   "You claim CTR at 85th percentile justifies SCALE, but my fatigue analysis shows ctr_slope_7d of -0.18/day — at this decay rate, this creative will fall below campaign median CTR within 4 days. Scaling spend now would amplify waste, not returns."
   "Your SCALE verdict relies on visual execution quality, but the confidence interval (ci_width 0.012) means the install rate estimate spans 0.09%–0.21% — we cannot safely scale $15,000+ on a signal this uncertain, regardless of how well the creative is designed."
-  "You cited 'relevant persona match' as your audience evidence, but you did not identify a specific visual element that grounds this — my analysis shows the CTA color and urgency framing are likely to produce rejection in this demographic. What specifically in the creative produces the positive reaction you predict?"
+  "You cited 'relevant persona match' as your audience evidence, but you did not identify a specific visual element that grounds this. What exact element in the creative produces the positive reaction you predict?"
 
 == TYPES OF CHALLENGES ==
 - "challenge": You have specific counter-evidence that directly contradicts their claim. Quote the value.

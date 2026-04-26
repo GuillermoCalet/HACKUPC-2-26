@@ -13,7 +13,7 @@ from agents._agent_helpers import (
     load_prompt, parse_opinion, parse_messages,
     context_str, challenges_str, opinions_str,
 )
-from agents.heuristics import fallback_messages, fallback_opinion
+from agents.heuristics import calibrate_opinion, fallback_messages, fallback_opinion
 
 CARD = AgentCard(
     name="fatigue_detective",
@@ -27,8 +27,9 @@ def _compute_fatigue_signals(context: dict) -> str:
     signals: dict[str, object] = {}
     slope = context.get("ctr_slope_7d", 0.0)
     signals["ctr_slope_7d"] = slope
-    signals["strong_decay"] = slope < -0.10
-    signals["moderate_decay"] = -0.10 <= slope < -0.05
+    # ctr_slope_7d is a rate; -0.001 is roughly -0.10 percentage points/day.
+    signals["strong_recent_decay"] = slope < -0.001
+    signals["moderate_recent_decay"] = -0.001 <= slope < -0.0005
 
     decay_pct = context.get("ctr_decay_pct", 0.0)
     signals["ctr_decay_pct"] = decay_pct
@@ -57,7 +58,8 @@ async def opinion_fn(
     )
     try:
         raw = generate_text(user_msg, max_tokens=1024)
-        return parse_opinion(raw, CARD.name, round_num)
+        opinion = parse_opinion(raw, CARD.name, round_num)
+        return calibrate_opinion(CARD.name, task, opinion, previous_opinion)
     except Exception as exc:
         print(f"[{CARD.name}] LLM opinion failed, using fatigue fallback: {exc}")
         return fallback_opinion(CARD.name, task, prior_messages, previous_opinion)

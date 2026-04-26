@@ -29,6 +29,11 @@ Decision rules:
 - SCALE: ci_width < 0.002 AND overall_roas > 1.2 AND spend_pct < 0.7 (reliable profitable signal)
 - TEST_NEXT: installs < 50 OR ci_width > 0.008 (insufficient data for any recommendation)
 
+Calibration:
+- PAUSE is reserved for clear financial harm: the creative is losing money or wasting high spend. Do NOT vote PAUSE because of fatigue, visual weakness, or uncertainty; those are PIVOT or TEST_NEXT unless the economics are clearly bad.
+- If overall_roas is above 1.0, do not say the creative is losing money. If scaling still feels risky, vote PIVOT or TEST_NEXT and explain the specific risk.
+- If the signal is uncertain, vote TEST_NEXT, not PAUSE.
+
 == SPECIFICITY REQUIREMENT — THIS IS MANDATORY ==
 Every claim MUST:
   (a) Quote the exact value of the financial or statistical metric being cited

@@ -173,3 +173,22 @@ def get_cached_result_for_creative(creative_id: str) -> dict[str, Any]:
     if debate_id:
         result.setdefault("events", evidence_store.get_debate_log(debate_id))
     return result
+
+
+@app.get("/debug/debate/{creative_id}")
+async def debug_debate(creative_id: str) -> dict[str, Any]:
+    """Run a debate and return the calibration trace used to choose the verdict."""
+
+    try:
+        task = debate.build_task(
+            creative_id,
+            parquet_path=PARQUET_PATH,
+            campaign_id=CAMPAIGN_ID,
+        )
+    except debate.CreativeNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    result = await debate.run_debate(task, log_events=False)
+    return result.debug or {}
