@@ -354,17 +354,15 @@ def inject_css() -> None:
         base_css = ""
 
     st.markdown(
-        f"""
-<style>
-{base_css}
+        "<style>\n" + base_css + """
 /* =========================================================================
    Streamlit / App-specific structural overrides
    ========================================================================= */
-.stApp {{
+.stApp {
   background: var(--bg);
   background-image: var(--bg-app);
   color: var(--text);
-}}
+}
 
 div[data-testid="stToolbar"] {
   display: none;
