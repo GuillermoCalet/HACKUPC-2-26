@@ -492,6 +492,58 @@ def _pause_harm_is_clear(context: dict[str, Any], final_opinions: list[Opinion])
     return losing_at_scale or wasteful_fatigue or hard_visual_or_audience_block
 
 
+def _strong_recent_decay(context: dict[str, Any]) -> bool:
+    return (_numeric(context, "ctr_slope_7d") or 0.0) <= -0.001
+
+
+def _financial_pivot_is_clear(context: dict[str, Any]) -> bool:
+    roas = _numeric(context, "overall_roas", "roas") or 0.0
+    spend_pct = _numeric(context, "spend_pct", "spend_share_pct") or 0.0
+    ctr_pct = _numeric(context, "ctr_pct") or 0.5
+    ipm_pct = _numeric(context, "ipm_pct") or 0.5
+    return (
+        roas < 1.10
+        or (spend_pct >= 0.75 and (ctr_pct < 0.35 or ipm_pct < 0.35) and roas < 1.20)
+    )
+
+
+def _has_grounded_execution_issue(final_opinions: list[Opinion]) -> bool:
+    issue_terms = (
+        "cta",
+        "call-to-action",
+        "button",
+        "layout",
+        "clutter",
+        "text",
+        "headline",
+        "first frame",
+        "hook",
+        "dominant",
+        "visual hierarchy",
+        "legible",
+        "readable",
+    )
+    for opinion in final_opinions:
+        if opinion.agent not in {"visual_critic", "audience_simulator"}:
+            continue
+        if opinion.verdict != "PIVOT":
+            continue
+        has_visual_evidence = any(evidence.type == "visual" for evidence in opinion.evidence)
+        text = " ".join(opinion.claims).lower()
+        if has_visual_evidence and any(term in text for term in issue_terms):
+            return True
+    return False
+
+
+def _pivot_is_justified(context: dict[str, Any], final_opinions: list[Opinion]) -> bool:
+    return (
+        _confirmed_fatigue(context)
+        or _strong_recent_decay(context)
+        or _financial_pivot_is_clear(context)
+        or _has_grounded_execution_issue(final_opinions)
+    )
+
+
 def _pause_replacement(scores: dict[str, float], context: dict[str, Any]) -> Verdict:
     # PAUSE is a kill switch. If the evidence is uncertainty, TEST_NEXT wins; if
     # the concept has useful signal but the execution is tired, PIVOT wins.
@@ -580,6 +632,11 @@ def compute_consensus(
         verdict = _pause_replacement(scores, context)
         _move_score(scores_after_overrides, previous_verdict, verdict)
         applied_overrides.append(f"pause_requires_clear_harm_to_{verdict.lower()}")
+
+    if verdict == "PIVOT" and not _pivot_is_justified(context, final_opinions):
+        _move_score(scores_after_overrides, "PIVOT", "TEST_NEXT")
+        verdict = "TEST_NEXT"
+        applied_overrides.append("pivot_requires_clear_change_signal_to_test_next")
 
     adjusted_ranked = sorted(scores_after_overrides.items(), key=lambda item: item[1], reverse=True)
     adjusted_top_score = adjusted_ranked[0][1] if adjusted_ranked else 0.0

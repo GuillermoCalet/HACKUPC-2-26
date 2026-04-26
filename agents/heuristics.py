@@ -128,6 +128,42 @@ def _pause_harm_is_clear(context: dict[str, Any]) -> bool:
     return losing_at_scale or wasteful_with_fatigue
 
 
+def _strong_recent_decay(context: dict[str, Any]) -> bool:
+    return _metric(context, "ctr_slope_7d", default=0.0) <= -0.001
+
+
+def _financial_pivot_is_clear(context: dict[str, Any]) -> bool:
+    spend_pct = _metric(context, "spend_pct", "spend_share_pct", default=0.5)
+    ctr_pct = _metric(context, "ctr_pct", default=0.5)
+    ipm_pct = _metric(context, "ipm_pct", default=0.5)
+    roas = _roas(context)
+    return (
+        roas < 1.10
+        or (spend_pct >= 0.75 and (ctr_pct < 0.35 or ipm_pct < 0.35) and roas < 1.20)
+    )
+
+
+def _has_grounded_execution_issue(opinion: Opinion) -> bool:
+    has_visual_evidence = any(evidence.type == "visual" for evidence in opinion.evidence)
+    text = " ".join(opinion.claims).lower()
+    issue_terms = (
+        "cta",
+        "call-to-action",
+        "button",
+        "layout",
+        "clutter",
+        "text",
+        "headline",
+        "first frame",
+        "hook",
+        "dominant",
+        "visual hierarchy",
+        "legible",
+        "readable",
+    )
+    return has_visual_evidence and any(term in text for term in issue_terms)
+
+
 def _supports_visual_pause(opinion: Opinion) -> bool:
     text = " ".join(opinion.claims).lower()
     hard_blockers = (
@@ -182,6 +218,15 @@ def calibrate_opinion(
                     *opinion.claims[:2],
                 ],
             }
+        elif not _confirmed_fatigue(context) and not _strong_recent_decay(context):
+            updates = {
+                "verdict": "TEST_NEXT",
+                "confidence": min(opinion.confidence, 0.66),
+                "claims": [
+                    "Fatigue matters, but it is not confirmed here; lifetime decay alone should trigger a controlled next test rather than a forced creative pivot.",
+                    *opinion.claims[:2],
+                ],
+            }
 
     elif agent_name == "performance_analyst" and opinion.verdict == "PAUSE":
         if not _pause_harm_is_clear(context):
@@ -220,6 +265,15 @@ def calibrate_opinion(
                     *opinion.claims[:2],
                 ],
             }
+        elif opinion.verdict == "PIVOT" and not _financial_pivot_is_clear(context):
+            updates = {
+                "verdict": "TEST_NEXT",
+                "confidence": min(opinion.confidence, 0.66),
+                "claims": [
+                    "Risk is not clear enough for a pivot; the economics are not actively bad, so this should stay as a measured next test.",
+                    *opinion.claims[:2],
+                ],
+            }
 
     elif agent_name in {"visual_critic", "audience_simulator"} and opinion.verdict == "PAUSE":
         if not _supports_visual_pause(opinion):
@@ -228,6 +282,17 @@ def calibrate_opinion(
                 "confidence": min(opinion.confidence, 0.68),
                 "claims": [
                     "The visual or audience concern points to a specific execution change, but it is not a hard reason to stop the concept entirely.",
+                    *opinion.claims[:2],
+                ],
+            }
+
+    elif agent_name in {"visual_critic", "audience_simulator"} and opinion.verdict == "PIVOT":
+        if not _confirmed_fatigue(context) and not _has_grounded_execution_issue(opinion):
+            updates = {
+                "verdict": "TEST_NEXT",
+                "confidence": min(opinion.confidence, 0.64),
+                "claims": [
+                    "The execution issue is not grounded enough to force a pivot, so the next step should be a controlled test.",
                     *opinion.claims[:2],
                 ],
             }
