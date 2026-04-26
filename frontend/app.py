@@ -348,36 +348,23 @@ st.set_page_config(
 
 
 def inject_css() -> None:
+    try:
+        base_css = Path("colors_and_type.css").read_text()
+    except Exception:
+        base_css = ""
+
     st.markdown(
-        """
+        f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
-
-:root {
-  --bg: #020617;
-  --panel: rgba(15, 23, 42, 0.70);
-  --panel-strong: rgba(15, 23, 42, 0.92);
-  --border: rgba(148, 163, 184, 0.20);
-  --muted: #94a3b8;
-  --text: #e5edf8;
-  --cyan: #4dd8ff;
-  --green: #2ef2a0;
-  --purple: #b98cff;
-  --orange: #ffb020;
-  --red: #ff5b7a;
-}
-
-html, body, [class*="css"] {
-  font-family: 'Outfit', sans-serif;
-}
-
-.stApp {
-  background:
-    radial-gradient(circle at 12% 8%, rgba(77, 216, 255, 0.12), transparent 28%),
-    radial-gradient(circle at 88% 10%, rgba(46, 242, 160, 0.10), transparent 24%),
-    linear-gradient(135deg, #020617 0%, #07111f 45%, #030712 100%);
+{base_css}
+/* =========================================================================
+   Streamlit / App-specific structural overrides
+   ========================================================================= */
+.stApp {{
+  background: var(--bg);
+  background-image: var(--bg-app);
   color: var(--text);
-}
+}}
 
 div[data-testid="stToolbar"] {
   display: none;
@@ -1596,9 +1583,37 @@ def creative_card(creative: dict[str, Any], campaign_ctr: float, index: int) -> 
 
 def render_header(using_demo_data: bool) -> None:
     data_note = "Demo fallback data" if using_demo_data else "Live campaign parquet"
+    
+    # Use the wordmark styling provided in assets/wordmark.html
     st.markdown(
         f"""
-<div class="hero-shell">
+<style>
+  .wm {{
+    display:flex;align-items:center;gap:14px;
+    padding:5px 0 10px;
+    margin-bottom: 12px;
+  }}
+  .glyph {{
+    width:46px;height:46px;border-radius:14px;
+    background:linear-gradient(135deg,#4dd8ff,#2ef2a0);
+    display:flex;align-items:center;justify-content:center;
+    color:#03111a;font-weight:800;font-size:22px;letter-spacing:-.02em;
+    box-shadow:0 0 24px rgba(77,216,255,.25), inset 0 1px 0 rgba(255,255,255,.4);
+  }}
+  .text-wm {{display:flex;flex-direction:column;line-height:1}}
+  .text-wm .a {{color:var(--cyan);font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:800;margin-bottom:4px}}
+  .text-wm .b {{color:var(--fg1);font-size:26px;font-weight:800;letter-spacing:-.01em; margin:0; padding:0; line-height: 1; background: none; -webkit-text-fill-color: var(--fg1); box-shadow: none; transform: none; border: none;}}
+</style>
+
+<div class="wm">
+  <div class="glyph">CB</div>
+  <div class="text-wm">
+    <div class="a">Smadex × HackUPC</div>
+    <div class="b">Creative Boardroom</div>
+  </div>
+</div>
+
+<div class="hero-shell" style="margin-top: 8px;">
   <div class="eyebrow">AI ad decision copilot - {html.escape(data_note)}</div>
   <div class="hero-title">Creative Boardroom</div>
   <div class="hero-copy">
