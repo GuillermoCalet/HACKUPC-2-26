@@ -1977,7 +1977,7 @@ def render_creative_analytics(creatives: list[dict[str, Any]], metrics: dict[str
     st.markdown('<div class="screen-title">Single Creative Analytics</div>', unsafe_allow_html=True)
     st.markdown('<div class="screen-caption">Deep-dive on fatigue trends, ROAS, and scale readiness for the selected ad.</div>', unsafe_allow_html=True)
 
-    left, center, right = st.columns([0.9, 1.3, 0.9], gap="medium")
+    left, center, right = st.columns([0.65, 1.45, 1.0], gap="medium")
     with left:
         selected = selected_creative_selector(creatives)
         render_asset(selected)
