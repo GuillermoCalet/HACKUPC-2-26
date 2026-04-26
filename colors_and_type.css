@@ -1,0 +1,283 @@
+/* =========================================================================
+   Creative Boardroom — Foundation tokens
+   Lifted from frontend/app.py (HACKUPC-2-26). Pair with Outfit from Google.
+   ========================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* ---------- Surface / canvas ---------- */
+  --bg:              #020617;                       /* slate-950 — app canvas */
+  --panel:           rgba(15, 23, 42, 0.70);        /* default glass card */
+  --panel-strong:    rgba(15, 23, 42, 0.92);        /* opaque panel variant */
+  --panel-deep:      rgba(2, 6, 23, 0.54);          /* nested panel (transcripts, dark wells) */
+  --panel-mini:      rgba(2, 6, 23, 0.44);          /* compact metric tiles */
+  --border:          rgba(148, 163, 184, 0.20);     /* slate-400 @ 20% */
+  --border-soft:     rgba(148, 163, 184, 0.14);
+  --border-strong:   rgba(148, 163, 184, 0.26);
+
+  /* ---------- Foreground / text ---------- */
+  --fg1:             #e5edf8;                       /* primary text */
+  --fg2:             #cbd5e1;                       /* body / claims */
+  --fg3:             #9fb1c8;                       /* contextual copy */
+  --muted:           #94a3b8;                       /* meta / labels */
+
+  /* ---------- Brand accents (also agent + verdict identity) ---------- */
+  --cyan:            #4dd8ff;   /* Visual Critic / primary CTA / active connector */
+  --green:           #2ef2a0;   /* Performance Analyst / SCALE / live pulse */
+  --orange:          #ffb020;   /* Fatigue Detective / PIVOT */
+  --red:             #ff5b7a;   /* Risk Officer / PAUSE */
+  --purple:          #b98cff;   /* Audience Simulator / TEST_NEXT / target highlight */
+
+  /* Verdict ↔ hue (single source of truth — keep aligned with VERDICT_COLORS) */
+  --verdict-scale:     var(--green);
+  --verdict-pause:     var(--red);
+  --verdict-pivot:     var(--orange);
+  --verdict-test-next: var(--purple);
+
+  /* Status badge gradients (creative health) */
+  --status-top-bg:           linear-gradient(135deg, #2ef2a0, #b8ffd9);
+  --status-top-fg:           #04130d;
+  --status-fatigued-bg:      linear-gradient(135deg, #ffb020, #ff5b7a);
+  --status-fatigued-fg:      #190d02;
+  --status-stable-bg:        linear-gradient(135deg, #4dd8ff, #a7f3ff);
+  --status-stable-fg:        #03111a;
+  --status-underperf-bg:     rgba(100, 116, 139, 0.42);
+  --status-underperf-fg:     #e2e8f0;
+
+  /* ---------- Canvas backgrounds (compose with linear-gradient on top) ---------- */
+  --bg-app: 
+    radial-gradient(circle at 12% 8%, rgba(77, 216, 255, 0.12), transparent 28%),
+    radial-gradient(circle at 88% 10%, rgba(46, 242, 160, 0.10), transparent 24%),
+    linear-gradient(135deg, #020617 0%, #07111f 45%, #030712 100%);
+
+  --bg-card:
+    linear-gradient(180deg, rgba(30, 41, 59, 0.78), rgba(15, 23, 42, 0.68));
+
+  --bg-creative-card:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(2, 6, 23, 0.70));
+
+  --bg-hero:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.78), rgba(2, 6, 23, 0.40)),
+    linear-gradient(90deg, rgba(77, 216, 255, 0.08), rgba(46, 242, 160, 0.05));
+
+  /* Image placeholder when no creative thumb is available */
+  --bg-placeholder:
+    linear-gradient(135deg, rgba(77, 216, 255, 0.22), rgba(185, 140, 255, 0.15)),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 10px, transparent 10px 20px);
+
+  /* ---------- Type ---------- */
+  --font-sans: 'Outfit', system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif;
+
+  /* Display + body scale (px-equiv noted) */
+  --t-hero:        clamp(2.2rem, 5vw, 4.8rem);   /* 35→77 — hero title */
+  --t-display-md:  clamp(1.65rem, 2.6vw, 3.1rem); /* verdict label */
+  --t-h1:          1.6rem;       /* screen titles */
+  --t-h2:          1.22rem;      /* section heads */
+  --t-h3:          1.1rem;       /* card titles */
+  --t-body:        1rem;
+  --t-body-sm:     0.9rem;
+  --t-meta:        0.82rem;      /* eyebrows, labels */
+  --t-caption:     0.78rem;
+  --t-mini:        0.72rem;
+
+  --lh-tight:      0.92;         /* hero */
+  --lh-snug:       1.05;         /* card titles */
+  --lh-normal:     1.35;
+  --lh-loose:      1.48;         /* verdict reasons */
+
+  --fw-regular:    400;
+  --fw-medium:     500;
+  --fw-semibold:   600;
+  --fw-bold:       700;
+  --fw-black:      800;          /* default for titles, labels, verdicts */
+
+  --ls-eyebrow:    0.16em;
+  --ls-verdict:    0.08em;
+  --ls-label:      0.08em;
+
+  /* ---------- Radii ---------- */
+  --r-pill:        999px;
+  --r-xl:          28px;   /* hero shell */
+  --r-lg:          24px;   /* large cards */
+  --r-md:          22px;   /* default card */
+  --r-sm:          18px;   /* nested card / agent node */
+  --r-xs:          16px;   /* mini metric */
+  --r-2xs:         14px;   /* compact metric */
+
+  /* ---------- Spacing ---------- */
+  --sp-1:          4px;
+  --sp-2:          8px;
+  --sp-3:          10px;
+  --sp-4:          12px;
+  --sp-5:          14px;
+  --sp-6:          18px;
+  --sp-7:          22px;
+  --sp-8:          28px;
+
+  /* ---------- Shadows / elevation ---------- */
+  --sh-resting:    0 18px 50px rgba(0,0,0,0.28);
+  --sh-card:       0 20px 60px rgba(0,0,0,0.24);
+  --sh-creative:   0 20px 60px rgba(0,0,0,0.30);
+  --sh-hero:       0 28px 80px rgba(0,0,0,0.45);
+  --sh-inset-hl:   inset 0 1px 0 rgba(255,255,255,0.04);
+  --sh-glow-cyan:  0 0 28px rgba(77, 216, 255, 0.22);
+  --sh-glow-green: 0 0 18px rgba(46, 242, 160, 0.65);
+  --sh-glow-purple:0 0 28px rgba(185, 140, 255, 0.18);
+
+  /* ---------- Effects ---------- */
+  --blur-glass:    blur(16px);
+  --blur-hero:     blur(18px);
+  --blur-overlay:  blur(12px);
+
+  /* ---------- Motion ---------- */
+  --ease:          ease-in-out;
+  --d-pulse-node:  1.4s;
+  --d-pulse-line:  1.3s;
+}
+
+/* =========================================================================
+   Semantic element styles — apply directly or @apply via composition
+   ========================================================================= */
+
+html, body {
+  background: var(--bg);
+  background-image: var(--bg-app);
+  color: var(--fg1);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: var(--lh-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, .h1 {
+  font-family: var(--font-sans);
+  font-size: var(--t-hero);
+  font-weight: var(--fw-black);
+  line-height: var(--lh-tight);
+  letter-spacing: 0;
+  margin: 0;
+  color: var(--fg1);
+}
+
+h2, .h2 {
+  font-size: var(--t-h2);
+  font-weight: var(--fw-black);
+  line-height: var(--lh-snug);
+  margin: 0 0 var(--sp-3);
+  color: var(--fg1);
+}
+
+h3, .h3 {
+  font-size: var(--t-h3);
+  font-weight: var(--fw-black);
+  line-height: var(--lh-snug);
+  margin: 0 0 var(--sp-2);
+  color: var(--fg1);
+}
+
+p, .p {
+  font-size: var(--t-body);
+  color: var(--fg2);
+  line-height: var(--lh-loose);
+  margin: 0 0 var(--sp-4);
+}
+
+.eyebrow {
+  color: var(--cyan);
+  font-size: var(--t-meta);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  font-weight: var(--fw-black);
+}
+
+.label {
+  color: var(--muted);
+  font-size: var(--t-meta);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  font-weight: var(--fw-bold);
+}
+
+.meta {
+  color: var(--muted);
+  font-size: var(--t-caption);
+}
+
+.value {
+  color: var(--fg1);
+  font-size: 2rem;
+  font-weight: var(--fw-black);
+  line-height: 1;
+}
+
+.value-sm {
+  color: var(--fg1);
+  font-size: 1.05rem;
+  font-weight: var(--fw-black);
+}
+
+code, .mono {
+  /* Codebase ships zero monospace — fall back to system stack */
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+  background: var(--panel-mini);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  padding: 1px 6px;
+  color: var(--fg1);
+}
+
+/* Verdict pill — single canonical recipe */
+.verdict-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  border-radius: var(--r-pill);
+  padding: 13px 18px;
+  font-size: var(--t-display-md);
+  font-weight: var(--fw-black);
+  letter-spacing: var(--ls-verdict);
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.06);
+}
+.verdict-pill[data-verdict="SCALE"]     { color: var(--verdict-scale); }
+.verdict-pill[data-verdict="PAUSE"]     { color: var(--verdict-pause); }
+.verdict-pill[data-verdict="PIVOT"]     { color: var(--verdict-pivot); }
+.verdict-pill[data-verdict="TEST_NEXT"] { color: var(--verdict-test-next); }
+
+/* Status badge */
+.status-badge {
+  display: inline-flex;
+  border-radius: var(--r-pill);
+  padding: 6px 10px;
+  font-size: var(--t-caption);
+  font-weight: var(--fw-black);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.status-badge.top          { color: var(--status-top-fg);       background: var(--status-top-bg); }
+.status-badge.fatigued     { color: var(--status-fatigued-fg);  background: var(--status-fatigued-bg); }
+.status-badge.stable       { color: var(--status-stable-fg);    background: var(--status-stable-bg); }
+.status-badge.underperformer { color: var(--status-underperf-fg); background: var(--status-underperf-bg); }
+
+/* Glass card baseline */
+.glass-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 20px;
+  background: var(--panel);
+  box-shadow: var(--sh-inset-hl), var(--sh-resting);
+  backdrop-filter: var(--blur-glass);
+}
+
+/* Keyframes used across the system */
+@keyframes nodePulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.9); }
+  50%      { opacity: 1;    transform: scale(1.25); }
+}
+
+@keyframes connectorPulse {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 1; }
+}

@@ -1186,24 +1186,37 @@ div[data-testid="stRadio"] [role="radio"] {
 }
 
 .st-key-main_nav .stButton > button {
-  min-height: 76px;
-  border-radius: 20px;
+  min-height: 72px;
+  border-radius: 18px;
   justify-content: flex-start;
-  padding: 0.9rem 1.2rem;
-  border: 1px solid rgba(148, 163, 184, 0.26);
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.78), rgba(2, 6, 23, 0.58));
-  color: #dbeafe;
-  font-size: clamp(0.98rem, 1vw, 1.12rem);
+  padding: 0.8rem 1.2rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.80), rgba(2, 6, 23, 0.60));
+  color: #94a3b8;
+  font-size: 0.96rem;
+  font-weight: 700;
   text-align: left;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 14px 36px rgba(0,0,0,0.20);
+  white-space: pre-line;
+  line-height: 1.3;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 30px rgba(0,0,0,0.18);
+  transition: all 0.2s ease;
+}
+
+.st-key-main_nav .stButton > button:hover {
+  border-color: rgba(77, 216, 255, 0.36);
+  color: #dbeafe;
 }
 
 .st-key-main_nav .stButton > button[kind="primary"] {
-  border-color: rgba(77, 216, 255, 0.72);
+  border-color: rgba(77, 216, 255, 0.65);
   background:
-    linear-gradient(135deg, rgba(77,216,255,0.26), rgba(46,242,160,0.16)),
-    rgba(15, 23, 42, 0.82);
-  box-shadow: 0 0 0 1px rgba(77,216,255,0.12), 0 18px 46px rgba(77,216,255,0.10);
+    linear-gradient(135deg, rgba(77,216,255,0.20), rgba(46,242,160,0.12)),
+    rgba(15, 23, 42, 0.88);
+  color: #e5edf8;
+  box-shadow:
+    0 0 0 1px rgba(77,216,255,0.15),
+    0 0 32px rgba(77,216,255,0.12),
+    0 14px 40px rgba(0,0,0,0.24);
 }
 
 button[kind="primary"], .stButton > button {
@@ -1719,55 +1732,67 @@ def creative_card(creative: dict[str, Any], campaign_ctr: float, index: int) -> 
     image_uri = image_to_data_uri(creative.get("image_path"))
     creative_id = str(creative.get("creative_id", "unknown"))
     title = f"Creative {html.escape(creative_id)}"
-    image_html = (
-        f'<img class="creative-image" src="{image_uri}" alt="{title}">'
-        if image_uri
-        else f'<div class="creative-image creative-placeholder">{title}</div>'
-    )
-    reliability = safe_float(creative.get("reliability_score"), 0.5)
     ctr_vs = safe_float(creative.get("ctr_vs_campaign_pct"))
     spend_share = safe_float(creative.get("spend_share_pct"))
-    rank = safe_float(creative.get("ctr_pct"))
-    theme = html.escape(str(creative.get("theme") or creative.get("primary_theme") or "unknown"))
-    format_ = html.escape(str(creative.get("format") or "unknown"))
+    format_ = html.escape(str(creative.get("format") or "unknown").replace("_", " ").title())
+    tone = html.escape(str(creative.get("emotional_tone") or creative.get("theme") or "—"))
+    ctr_color = "#2ef2a0" if ctr_vs >= 0 else "#ff5b7a"
+    ctr_sign = "+" if ctr_vs >= 0 else ""
+
+    # Status badge color per class
+    badge_styles = {
+        "status-top":           "background:linear-gradient(135deg,#2ef2a0,#b8ffd9);color:#04130d;",
+        "status-fatigued":      "background:linear-gradient(135deg,#ffb020,#ff5b7a);color:#190d02;",
+        "status-stable":        "background:linear-gradient(135deg,#4dd8ff,#a7f3ff);color:#03111a;",
+        "status-underperformer":"background:rgba(100,116,139,0.42);color:#e2e8f0;",
+    }
+    badge_style = badge_styles.get(status_class, badge_styles["status-stable"])
+
+    if image_uri:
+        image_block = f"""
+<div style="position:relative;width:100%;aspect-ratio:1/1;border-radius:16px;overflow:hidden;margin-bottom:12px;">
+  <img src="{image_uri}" alt="{title}" style="width:100%;height:100%;object-fit:cover;display:block;">
+  <div style="position:absolute;top:10px;right:10px;">
+    <span style="display:inline-flex;border-radius:999px;padding:5px 10px;font-size:0.72rem;font-weight:800;border:1px solid rgba(255,255,255,0.15);{badge_style}">{html.escape(label)}</span>
+  </div>
+  <div style="position:absolute;bottom:0;left:0;right:0;height:56px;background:linear-gradient(to top,rgba(2,6,23,0.85),transparent);border-radius:0 0 16px 16px;"></div>
+  <div style="position:absolute;bottom:8px;left:12px;color:#e5edf8;font-size:0.8rem;font-weight:700;letter-spacing:0.02em;">{format_} · {tone}</div>
+</div>"""
+    else:
+        image_block = f"""
+<div style="position:relative;width:100%;aspect-ratio:1/1;border-radius:16px;overflow:hidden;margin-bottom:12px;
+  background:linear-gradient(135deg,rgba(77,216,255,0.22),rgba(185,140,255,0.15)),
+  repeating-linear-gradient(45deg,rgba(255,255,255,0.05) 0 10px,transparent 10px 20px);
+  display:flex;align-items:center;justify-content:center;">
+  <div style="position:absolute;top:10px;right:10px;">
+    <span style="display:inline-flex;border-radius:999px;padding:5px 10px;font-size:0.72rem;font-weight:800;border:1px solid rgba(255,255,255,0.15);{badge_style}">{html.escape(label)}</span>
+  </div>
+  <span style="color:rgba(229,237,248,0.55);font-weight:700;font-size:0.9rem;">{title}</span>
+  <div style="position:absolute;bottom:8px;left:12px;color:#94a3b8;font-size:0.8rem;">{format_} · {tone}</div>
+</div>"""
 
     st.markdown(
         f"""
 <div class="creative-card">
-  {image_html}
-  <div class="creative-title">
-    <div>
-      <div class="creative-id">{title}</div>
-      <div style="color:#94a3b8;font-size:0.88rem;">{format_} - {theme}</div>
-    </div>
-    <span class="status-badge {status_class}">{html.escape(label)}</span>
+  {image_block}
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <div style="color:#e5edf8;font-size:1rem;font-weight:800;">{title}</div>
   </div>
-  <div class="mini-grid">
-    <div class="mini-metric">
-      <div class="mini-label">CTR vs campaign</div>
-      <div class="mini-value">{fmt_signed_pct(ctr_vs)}</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+    <div style="border-radius:12px;padding:10px 12px;background:rgba(2,6,23,0.52);border:1px solid rgba(148,163,184,0.12);">
+      <div style="color:#94a3b8;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:700;">CTR vs campaign</div>
+      <div style="color:{ctr_color};font-size:1.15rem;font-weight:800;margin-top:4px;">{ctr_sign}{ctr_vs:.0f}%</div>
     </div>
-    <div class="mini-metric">
-      <div class="mini-label">Spend share</div>
-      <div class="mini-value">{spend_share * 100:.1f}%</div>
+    <div style="border-radius:12px;padding:10px 12px;background:rgba(2,6,23,0.52);border:1px solid rgba(148,163,184,0.12);">
+      <div style="color:#94a3b8;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:700;">Spend share</div>
+      <div style="color:#e5edf8;font-size:1.15rem;font-weight:800;margin-top:4px;">{spend_share * 100:.1f}%</div>
     </div>
   </div>
-  <div class="mini-grid">
-    <div class="mini-metric">
-      <div class="mini-label">CTR rank</div>
-      <div class="mini-value">P{int(rank * 100)}</div>
-    </div>
-    <div class="mini-metric">
-      <div class="mini-label">Reliability</div>
-      <div class="mini-value">{int(reliability * 100)}%</div>
-    </div>
-  </div>
-  <div class="reliability-bar"><div class="reliability-fill" style="width:{int(reliability * 100)}%;"></div></div>
 </div>
         """,
         unsafe_allow_html=True,
     )
-    if st.button("Analyze Creative", key=f"analyze_{creative_id}_{index}", use_container_width=True):
+    if st.button("Analyze Creative →", key=f"analyze_{creative_id}_{index}", use_container_width=True):
         st.session_state["selected_creative_id"] = creative_id
         st.session_state["active_screen"] = "Creative Analytics"
         st.rerun()
@@ -1805,12 +1830,16 @@ def render_header(using_demo_data: bool) -> None:
   </div>
 </div>
 
-<div class="hero-shell" style="margin-top: 8px;">
-  <div class="eyebrow">AI ad decision copilot - {html.escape(data_note)}</div>
-  <div class="hero-title">Creative Boardroom</div>
-  <div class="hero-copy">
-    Campaign-level creative intelligence for marketing leaders: clear verdicts,
-    metric-backed explanations, reliability guardrails, and a visible agent debate.
+<div class="hero-shell" style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+  <div>
+    <div class="eyebrow" style="margin-bottom:6px;">AI ad decision copilot</div>
+    <div class="hero-title" style="font-size:clamp(1.8rem,3.5vw,3rem);margin-bottom:6px;">Creative Boardroom</div>
+    <div class="hero-copy" style="font-size:0.96rem;max-width:640px;">
+      Five AI specialists debate each creative, challenge each other's data, and converge on one actionable recommendation — scale, pause, pivot, or test next.
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+    <div style="border-radius:999px;padding:5px 14px;background:rgba(46,242,160,0.12);border:1px solid rgba(46,242,160,0.30);color:#2ef2a0;font-size:0.78rem;font-weight:800;letter-spacing:0.06em;">{html.escape(data_note.upper())}</div>
   </div>
 </div>
         """,
@@ -1832,38 +1861,46 @@ def render_campaign_overview(creatives: list[dict[str, Any]], metrics: dict[str,
     with cols[3]:
         metric_card("Overall ROAS", f"{metrics['overall_roas']:.2f}x", "Revenue per dollar spent", "#ffb020")
 
-    st.markdown("")
-    left, right = st.columns([1.2, 1], gap="large")
-    with left:
-        st.markdown(
-            """
-<div class="threshold-panel">
-  <strong>How to read the cards</strong><br>
-  Top Performer means the creative sits in roughly the top quartile of campaign peers.
-  Fatigued means the historical trend suggests the ad may be losing attention.
-  Reliability is capped at 80% because the dataset is not a ground-truth experiment log.
+    # Campaign health banner
+    campaign_reliability = min(
+        0.80,
+        sum(safe_float(c.get("reliability_score"), 0.5) for c in creatives) / max(len(creatives), 1),
+    )
+    n_fatigued = sum(1 for c in creatives if str(c.get("creative_status", "")).lower() == "fatigued")
+    n_top = sum(1 for c in creatives if str(c.get("creative_status", "")).lower() == "top_performer")
+    st.markdown(
+        f"""
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin:16px 0 24px;padding:16px 20px;
+  border-radius:20px;background:rgba(15,23,42,0.60);border:1px solid rgba(148,163,184,0.16);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);">
+  <div style="flex:1;min-width:120px;">
+    <div style="color:#94a3b8;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Top Performers</div>
+    <div style="color:#2ef2a0;font-size:1.5rem;font-weight:800;margin-top:2px;">{n_top}</div>
+  </div>
+  <div style="flex:1;min-width:120px;">
+    <div style="color:#94a3b8;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Fatigued</div>
+    <div style="color:#ffb020;font-size:1.5rem;font-weight:800;margin-top:2px;">{n_fatigued}</div>
+  </div>
+  <div style="flex:2;min-width:200px;">
+    <div style="color:#94a3b8;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Decision Reliability</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+      <div style="flex:1;height:8px;border-radius:999px;background:rgba(148,163,184,0.18);overflow:hidden;">
+        <div style="height:100%;width:{int(campaign_reliability*100)}%;border-radius:999px;background:linear-gradient(90deg,#ffb020,#2ef2a0);"></div>
+      </div>
+      <span style="color:#e5edf8;font-weight:800;font-size:0.95rem;">{int(campaign_reliability*100)}%</span>
+    </div>
+    <div style="color:#94a3b8;font-size:0.76rem;margin-top:3px;">Directional — capped at 80% (non-ground-truth data)</div>
+  </div>
 </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    with right:
-        campaign_reliability = min(
-            0.80,
-            sum(safe_float(c.get("reliability_score"), 0.5) for c in creatives) / max(len(creatives), 1),
-        )
-        st.markdown(
-            f"""
-<div class="glass-card">
-  <div class="metric-label">Decision Reliability Estimate</div>
-  <div class="metric-value">{int(campaign_reliability * 100)}%</div>
-  <div class="metric-context">Directional confidence from volume, missing fields, and known dataset cleanliness.</div>
-  <div class="reliability-bar"><div class="reliability-fill" style="width:{int(campaign_reliability * 100)}%;"></div></div>
-</div>
-            """,
-            unsafe_allow_html=True,
-        )
+        """,
+        unsafe_allow_html=True,
+    )
 
-    st.markdown("### Creative Grid")
+    st.markdown(
+        '<div style="font-size:1.15rem;font-weight:800;color:#e5edf8;margin-bottom:4px;letter-spacing:-0.01em;">Creative Grid</div>'
+        '<div style="color:#94a3b8;font-size:0.88rem;margin-bottom:16px;">Click any card to open the deep-dive analytics view.</div>',
+        unsafe_allow_html=True,
+    )
     grid = st.columns(3)
     for index, creative in enumerate(creatives):
         with grid[index % 3]:
@@ -3269,16 +3306,24 @@ def render_boardroom(creatives: list[dict[str, Any]]) -> None:
     with right:
         st.markdown(
             """
-<div class="control-panel">
-  <div class="control-title">Boardroom Analysis</div>
-  <div class="control-copy">Run the agent debate when you are ready. The verdict appears only after the analysis completes.</div>
+<div style="border:1px solid rgba(77,216,255,0.22);border-radius:20px;padding:18px 20px;
+  background:linear-gradient(135deg,rgba(77,216,255,0.06),rgba(46,242,160,0.04)),rgba(15,23,42,0.72);
+  margin-bottom:14px;box-shadow:0 0 32px rgba(77,216,255,0.06);">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+    <div style="width:8px;height:8px;border-radius:50%;background:#2ef2a0;box-shadow:0 0 10px #2ef2a0;animation:nodePulse 1.4s ease-in-out infinite;"></div>
+    <div style="color:#e5edf8;font-size:1.05rem;font-weight:800;">Agent Boardroom</div>
+  </div>
+  <div style="color:#9fb1c8;font-size:0.88rem;line-height:1.45;">
+    5 AI specialists debate the selected creative across 4 rounds — independent opinions,
+    cross-examination, revisions, and weighted consensus.
+  </div>
 </div>
             """,
             unsafe_allow_html=True,
         )
         cols = st.columns(2)
         with cols[0]:
-            run_btn = st.button("Convene the Boardroom", type="primary", use_container_width=True)
+            run_btn = st.button("▶  Convene the Boardroom", type="primary", use_container_width=True)
         with cols[1]:
             load_cached_btn = st.button("Load Cached Result", use_container_width=True)
 
@@ -3316,6 +3361,13 @@ def render_boardroom(creatives: list[dict[str, Any]]) -> None:
             st.info("No verdict yet. Start the boardroom to generate the live agent debate and final recommendation.")
 
 
+NAV_META = {
+    "Campaign Overview":  ("01", "All 6 creatives at a glance"),
+    "Creative Analytics": ("02", "CTR decay & fatigue deep-dive"),
+    "Creative Boardroom": ("03", "5-agent AI debate → verdict"),
+}
+
+
 def render_navigation() -> str:
     if "active_screen" not in st.session_state:
         st.session_state["active_screen"] = SCREENS[0]
@@ -3323,9 +3375,11 @@ def render_navigation() -> str:
     with st.container(key="main_nav"):
         cols = st.columns(3, gap="medium")
         for col, screen in zip(cols, SCREENS):
+            num, desc = NAV_META.get(screen, ("—", ""))
+            label = f"{num}  {screen}\n{desc}"
             with col:
                 st.button(
-                    screen,
+                    label,
                     key=f"nav_{re.sub(r'[^a-z0-9]+', '_', screen.lower()).strip('_')}",
                     type="primary" if screen == active_screen else "secondary",
                     use_container_width=True,
